@@ -1,0 +1,2 @@
+In existing app/layout.tsx add: import './phase2.css';
+Do not remove globals.css, PWA metadata, or existing components.
