@@ -1,35 +1,27 @@
-# Tenant2Care v1.1 — Phase 2 deployment overlay
+# Tenant2Care v1.1 — Phase 3 integration overlay
 
-This archive is an **overlay**, not a full replacement for your existing GitHub repository. It contains complete Phase 2 modules and preserves your working `app/login/page.tsx`, `middleware.ts`, `utils/supabase/server.ts`, `app/layout.tsx`, `package.json`, and PWA files.
+## What this package does
+- Email/password tenant account page (`/tenant/login`), using existing Supabase Auth. Email confirmation required.
+- Authenticated tenant application form (`/tenant/apply`) showing available rooms.
+- Landlord review (`/landlord/applications`): approve (reserves room) or reject.
+- SQL migration with ownership checks and row locking to prevent concurrent approval of one room.
+- Preserves existing dashboard and management components; adds separate routes.
 
-## Install into your existing GitHub repository
-1. Download and extract this ZIP. Copy its **contents** into the repository root, preserving paths (do not upload the enclosing `tenant2care-phase2-overlay` folder).
-2. Add `import './phase2.css';` to your existing `app/layout.tsx` alongside the existing `globals.css` import. **Do not replace the layout**.
-3. Ensure `utils/supabase/server.ts` exports `createClient()` as in your working login deployment, and `app/auth/signout/route.ts` supports POST (the navigation sign-out form uses POST).
-4. The existing Supabase database must already contain `profiles`, `properties`, `rooms`, `applications`, and `tenancies` from your original schema.
-5. In Supabase SQL Editor, inspect and run `supabase/phase2_security.sql` after confirming that the existing landlord account's `profiles.role` is `landlord`. This strengthens RLS and prevents client role changes. **Never run this SQL before verifying the schema and backing up important data.**
-6. Commit to `main`. Vercel builds with `npm run build` and should deploy automatically. Keep `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set for Production.
-7. Verify `/login`, `/dashboard`, `/properties`, `/rooms`, `/tenants` and logout on desktop and mobile. Verify an incognito visitor cannot access the landlord pages.
+## Important: review before deployment
+**This is an integration overlay, not a verified full repository build.** It assumes `applications` has `id`, `owner_id`, `property_id`, `room_id`, `full_name`, `email`, `phone`, `requested_term_months`, `status`, `created_at`; `rooms` has `id`, `owner_id`, `property_id`, `name`, `monthly_rent`, `status`; `properties` has `id`, `owner_id`, `name`. It assumes `profiles.role='landlord'` for owner users. Check all columns and status constraints against your actual schema. Existing policies may permit other operations; audit them before public release.
 
-## Features
-- Dashboard counts from live Supabase queries.
-- Create, list, update and delete properties.
-- Create, list, update and delete rooms; choose a property and room status.
-- Register and manage **landlord-entered tenant applications**, including term preference. This is not a tenant self-service onboarding portal or identity verification.
-- Responsive sidebar and mobile bottom navigation.
-- Server-side role guard on every Phase 2 page; database RLS is still the primary data security boundary.
+1. Back up Supabase schema and data first. Run the migration in SQL Editor **after checking assumptions**.
+2. Copy `components/` and `app/` contents into corresponding GitHub folders, keeping your existing files.
+3. Append `docs/phase3.css` to `app/globals.css`.
+4. Review `middleware.ts`: allow `/tenant/login` and `/tenant/apply` through routing middleware (tenant RPCs enforce auth). Keep landlord routes protected. Avoid redirect loops.
+5. In Supabase Authentication URL configuration, add the deployed `/tenant/login` redirect URL. Keep Confirm Email enabled and signup enabled for tenants; if signup is currently disabled, users cannot create accounts.
+6. Commit and deploy. Run `npm run build` and test tenant sign-up, confirmation, submission, landlord approval, duplicate applications, rejected applications and competing approvals.
+7. Add links to `/landlord/applications` in your landlord navigation and `/tenant/login` on your public landing page.
 
-## Deliberate exclusions
-- No real facial verification, tenant self-registration, payment collection, automatic receipts, tenancy agreements, repair upload, or WhatsApp delivery in this phase.
-- No direct `profiles` creation or editing by the landlord. Supabase Auth creates identities; applications store applicants before an account is created.
-- Existing `applications` table has `status` and `verification_status`, but Phase 2 does not assert or perform verification.
-
-## Troubleshooting
-- `Module not found: utils/supabase/server`: ensure your existing utility file is still present.
-- `404`: check `app/<route>/page.tsx` locations and Vercel's deployed commit.
-- `permission denied`: confirm `profiles.role='landlord'`, SQL policies and owner_id.
-- Missing styles: confirm `app/layout.tsx` imports `./phase2.css`.
-- Logout fails: ensure your existing signout route supports POST; do not replace it without inspecting its cookie handling.
-
-## Architecture
-Next.js App Router UI → Supabase SSR browser client for CRUD; server-side `requireLandlord` guard using Supabase Auth and `profiles`; PostgreSQL RLS controls row access. No service-role secret is exposed to browsers.
+## Security and limits
+- No document uploads, identity/face verification, payment processing, receipts, contracts, or tenancy creation in this overlay.
+- Tenant contact data is personal data: publish a privacy notice and define retention/deletion procedures before inviting real tenants.
+- RPCs use SECURITY DEFINER with fixed search_path, explicit authentication checks and limited grants. Review any existing broad RLS policies and grants: adding restrictive tenant SELECT policy does not override other permissive policies.
+- `phase3_available_rooms` exposes only public room listing fields to authenticated users. No address or owner email is exposed.
+- Landlord approval sets room status `reserved`; the landlord must create a tenancy in a separate validated workflow later.
+- Test existing database triggers (`enforce_owner_links`) against the migration. Do not disable RLS.
