@@ -414,3 +414,19 @@ button:disabled {
     color: white;
   }
 }
+/* Tenant2Care dashboard additions: append to app/globals.css */
+.t2c-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.t2c-stats,.t2c-income{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-bottom:18px}
+.t2c-stat{display:flex;flex-direction:column;gap:10px;min-width:0;background:#fff;border:1px solid #f0cce0;border-radius:19px;padding:20px;text-decoration:none;color:#431331;box-shadow:0 5px 20px #8d14570a}
+.t2c-stat span{font-size:13px;font-weight:700;color:#78566b}
+.t2c-stat strong{font-size:clamp(24px,3vw,34px);color:#b51677;overflow-wrap:anywhere}
+.t2c-stat small{font-size:12px;color:#8b6b7d}
+a.t2c-stat:hover{border-color:#b51677;box-shadow:0 8px 25px #b516771a}
+.t2c-section{margin-bottom:18px}
+.t2c-property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.t2c-property{border:1px solid #f1d4e3;background:#fff8fc;border-radius:14px;padding:16px;overflow-wrap:anywhere}
+.t2c-property p{font-size:13px;color:#866579;margin-bottom:0}
+.t2c-quick{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 20px}
+.t2c-quick a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 15px;border-radius:12px;background:#b51677;color:#fff;font-size:13px;font-weight:750;text-decoration:none}
+.t2c-quick a:hover{background:#8c105b}
+@media(max-width:650px){.t2c-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.t2c-income{grid-template-columns:1fr}.t2c-stat{padding:15px}.t2c-quick a{width:100%}}
