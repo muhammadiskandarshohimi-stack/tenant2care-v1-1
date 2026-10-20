@@ -1,0 +1,12 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {createBrowserClient} from '@supabase/ssr';
+import {Shell} from './Management';
+const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+type Application={id:string;full_name:string;email:string;phone:string;status:string;room_id:string;created_at:string;requested_term_months:number};
+export default function Phase3LandlordApplications(){const [rows,setRows]=useState<Application[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ async function load(){setBusy(true);setError('');const {data:{user}}=await db.auth.getUser();if(!user){setError('Sign in again');setBusy(false);return;}const {data,error}=await db.from('applications').select('id,full_name,email,phone,status,room_id,created_at,requested_term_months').eq('owner_id',user.id).order('created_at',{ascending:false});if(error)setError(error.message);else setRows((data||[]) as Application[]);setBusy(false);}
+ useEffect(()=>{void load();},[]);
+ async function review(id:string,decision:'approved'|'rejected'){if(!window.confirm(`${decision==='approved'?'Approve and reserve room for':'Reject'} this application?`))return;setBusy(true);const {error}=await db.rpc('phase3_review_application',{p_application_id:id,p_decision:decision});if(error){setError(error.message);setBusy(false);}else await load();}
+ return <Shell><div className="page-title"><div><p className="eyebrow">PHASE 3</p><h1>Tenant application approvals</h1><p className="muted">Approving reserves the room; it does not create a tenancy or collect payment.</p></div></div><section className="panel"><div className="panel-heading"><h2>Applications ({rows.length})</h2><button className="secondary" disabled={busy} onClick={()=>void load()}>Refresh</button></div>{error&&<p role="alert" className="error">{error}</p>}{rows.map(a=><article className="record" key={a.id}><div><strong>{a.full_name}</strong><p>{a.email} · {a.phone} · {a.requested_term_months} months</p><p>Room ID: {a.room_id} · Status: <strong>{a.status}</strong></p></div>{a.status==='pending'&&<div className="record-actions"><button disabled={busy} onClick={()=>void review(a.id,'approved')}>Approve</button><button className="danger" disabled={busy} onClick={()=>void review(a.id,'rejected')}>Reject</button></div>}</article>)}{!busy&&rows.length===0&&<p>No applications yet.</p>}</section></Shell>;
+}
