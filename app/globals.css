@@ -430,3 +430,24 @@ a.t2c-stat:hover{border-color:#b51677;box-shadow:0 8px 25px #b516771a}
 .t2c-quick a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 15px;border-radius:12px;background:#b51677;color:#fff;font-size:13px;font-weight:750;text-decoration:none}
 .t2c-quick a:hover{background:#8c105b}
 @media(max-width:650px){.t2c-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.t2c-income{grid-template-columns:1fr}.t2c-stat{padding:15px}.t2c-quick a{width:100%}}
+
+/* Tenant2Care Phase 3 — Tenant Login Form */
+
+input[type="email"],
+input[type="password"] {
+  display: block;
+  width: 100%;
+  padding: 13px 15px;
+  margin: 8px 0 18px;
+  border: 1px solid #e7c2d7;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #431331;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: 2px solid #b51677;
+  outline-offset: 2px;
+}
