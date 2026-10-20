@@ -9,7 +9,13 @@ export async function updateSession(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
-        setAll(items) {
+        setAll(
+  items: {
+    name: string;
+    value: string;
+    options?: CookieOptions;
+  }[]
+) {
           items.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
