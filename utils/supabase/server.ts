@@ -1,3 +1,4 @@
+import type { CookieOptions } from "@supabase/ssr";
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -8,7 +9,15 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+       
+setAll(
+  items: {
+    name: string;
+    value: string;
+    options?: CookieOptions;
+  }[]
+) {
+
         setAll(items) {
           try { items.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }
           catch { /* Server Components cannot set cookies; refresh in middleware. */ }
