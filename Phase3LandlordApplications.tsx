@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {createBrowserClient} from '@supabase/ssr';
-import {Shell} from './Management';
+import {Shell} from './components/Management';
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 type Application={id:string;full_name:string;email:string;phone:string;status:string;room_id:string;created_at:string;requested_term_months:number};
 export default function Phase3LandlordApplications(){const [rows,setRows]=useState<Application[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
