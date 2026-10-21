@@ -1,5 +1,0 @@
-import Phase3LandlordApplications from '../../../components/Phase3LandlordApplications';
-
-export default function LandlordApplicationsPage() {
-  return <Phase3LandlordApplications />;
-}
