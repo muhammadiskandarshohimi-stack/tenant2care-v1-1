@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Shell } from './Management';
+import TenancyActions from './TenancyActions';
 type Application={id:string;room_id:string;full_name:string;requested_term_months:number;status:string};
 type Room={id:string;name:string;monthly_rent:number;deposit_amount:number;status:string};
 type Tenancy={id:string;application_id:string;room_id:string;start_date:string;end_date:string;term_months:number;monthly_rent:number;deposit_amount:number;status:string};
@@ -59,7 +60,7 @@ export default function Tenancies(){
  <button disabled={busy||!application} type="submit">{busy?'Please wait...':'Create draft tenancy'}</button>
  </form>{error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status" className="success">{message}</p>}
  </section><section className="panel"><div className="panel-heading"><h2>Tenancies ({rows.length})</h2><button className="secondary" disabled={busy} onClick={()=>void load()}>Refresh</button></div>
- {rows.map(t=><article className="record" key={t.id}><div><strong>{apps.find(a=>a.id===t.application_id)?.full_name||'Tenant'} — {rooms.find(r=>r.id===t.room_id)?.name||'Room'}</strong><p>{t.start_date} to {t.end_date} · {t.term_months} months</p><p>{money(t.monthly_rent)}/month · Deposit agreed {money(t.deposit_amount)}</p><p>Status: <strong>{t.status}</strong></p></div></article>)}
+ {rows.map(t=><article className="record" key={t.id}><div><strong>{apps.find(a=>a.id===t.application_id)?.full_name||'Tenant'} — {rooms.find(r=>r.id===t.room_id)?.name||'Room'}</strong><p>{t.start_date} to {t.end_date} · {t.term_months} months</p><p>{money(t.monthly_rent)}/month · Deposit agreed {money(t.deposit_amount)}</p><p>Status: <strong>{t.status}</strong></p><TenancyActions id={t.id} status={t.status} startDate={t.start_date} onChanged={load}/></div></article>)}
  {!busy&&rows.length===0&&<p>No tenancies yet.</p>}
  </section></div></Shell>;
 }

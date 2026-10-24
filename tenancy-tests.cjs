@@ -10,7 +10,7 @@ function harness({status='approved',room='reserved',existing=false,failure=null}
  const module={exports:{}};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/Tenancies.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{
  module,exports:module.exports,process:{env:{}},Intl,
- require(name){if(name==='react')return{useState(initial){const i=index++;if(!(i in state))state[i]=initial;return[state[i],v=>{state[i]=v}]},useEffect(fn){effects.push(fn)}};if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@supabase/ssr')return{createBrowserClient:()=>db};if(name==='./Management')return{Shell:'Shell'};throw Error(name)}
+ require(name){if(name==='react')return{useState(initial){const i=index++;if(!(i in state))state[i]=initial;return[state[i],v=>{state[i]=v}]},useEffect(fn){effects.push(fn)}};if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@supabase/ssr')return{createBrowserClient:()=>db};if(name==='./Management')return{Shell:'Shell'};if(name==='./TenancyActions')return{default:'TenancyActions'};throw Error(name)}
  });
  return{calls,filters,render(){index=0;effects=[];return module.exports.default()},async mount(){this.render();effects.forEach(f=>f());await new Promise(r=>setImmediate(r))}};
 }
@@ -25,7 +25,7 @@ const text=(h,pattern)=>nodes(h.render()).some(n=>typeof n.props.children==='str
  console.log('PASS eligible approved applicant prefills term, rent and deposit with owner-scoped reads');
  for(const options of [{status:'submitted'},{status:'rejected'},{room:'occupied'},{existing:true}]){let x=harness(options);await x.mount();assert.equal(all(x,'option').filter(n=>n.props.value==='app-test').length,0)}
  console.log('PASS unapproved, unavailable and already-linked applications are excluded');
- change(h,'input',0,'2026-11-01');change(h,'input',1,'-1');await submit(h);assert.equal(h.calls.length,0);
+ all(h,'input')[0].props.onInput({currentTarget:{value:'2026-11-01'}});all(h,'input')[0].props.onBlur({currentTarget:{value:'2026-11-01'}});change(h,'input',1,'-1');await submit(h);assert.equal(h.calls.length,0);
  change(h,'input',1,'450');change(h,'input',2,'-5');await submit(h);assert.equal(h.calls.length,0);
  console.log('PASS invalid rent and deposit blocked before RPC');
  change(h,'input',2,'900');await submit(h);
