@@ -29,7 +29,7 @@ export default function Overview(){
         supabase.from('properties').select('id,name').eq('owner_id',user.id),
         supabase.from('rooms').select('id,property_id,status,monthly_rent').eq('owner_id',user.id),
         supabase.from('applications').select('id',{count:'exact',head:true}).eq('owner_id',user.id),
-        supabase.from('tenancies').select('id',{count:'exact',head:true}).eq('owner_id',user.id)
+        supabase.from('tenancies').select('id,monthly_rent,status',{count:'exact'}).eq('owner_id',user.id)
       ]);
       const failure=[p.error,r.error,a.error,t.error].find(Boolean);
       if(failure)throw new Error(failure.message);
@@ -44,7 +44,7 @@ export default function Overview(){
         inactive:roomRows.filter(x=>x.status==='inactive').length,
         applications:a.count??0,tenancies:t.count??0,
         potential:roomRows.filter(x=>x.status!=='inactive').reduce((sum,x)=>sum+amount(x.monthly_rent),0),
-        scheduled:roomRows.filter(x=>x.status==='occupied').reduce((sum,x)=>sum+amount(x.monthly_rent),0)
+        scheduled:(t.data??[]).filter(x=>x.status==='active').reduce((sum,x)=>sum+amount(x.monthly_rent),0)
       });
     }catch(e){setError(e instanceof Error?e.message:'Unable to load dashboard data.');}
     finally{setLoading(false);}
@@ -65,7 +65,7 @@ export default function Overview(){
     <div className="t2c-stats">{cards.map(card=><Link href={card.url} className="t2c-stat" key={card.title}><span>{card.title}</span><strong>{loading?'…':card.value}</strong><small>View records →</small></Link>)}</div>
     <div className="t2c-income">
       <div className="t2c-stat"><span>Potential monthly rent (active rooms)</span><strong>{loading?'…':money(stats.potential)}</strong><small>Excludes inactive rooms; not collected income</small></div>
-      <div className="t2c-stat"><span>Occupied-room scheduled monthly rent</span><strong>{loading?'…':money(stats.scheduled)}</strong><small>Based on room status; not verified payments</small></div>
+      <div className="t2c-stat"><span>Active-tenancy monthly rent</span><strong>{loading?'…':money(stats.scheduled)}</strong><small>Agreed rent; not collected income</small></div>
       <div className="t2c-stat"><span>Room occupancy rate</span><strong>{loading?'…':`${stats.rooms-stats.inactive>0?(100*stats.occupied/(stats.rooms-stats.inactive)).toFixed(1):'0.0'}%`}</strong><small>Occupied / non-inactive rooms</small></div>
     </div>
     <section className="panel t2c-section"><h2>Property performance</h2><div className="t2c-property-grid">{properties.map(property=>{const owned=rooms.filter(room=>room.property_id===property.id);const occupied=owned.filter(room=>room.status==='occupied');return <div className="t2c-property" key={property.id}><strong>{property.name}</strong><p>{owned.length} rooms · {occupied.length} occupied</p><p>Potential: {money(owned.filter(room=>room.status!=='inactive').reduce((s,r)=>s+amount(r.monthly_rent),0))}/month</p></div>})}{!loading&&properties.length===0&&<p className="muted">No properties registered yet.</p>}</div></section>
