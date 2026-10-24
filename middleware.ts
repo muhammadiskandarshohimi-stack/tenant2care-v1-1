@@ -50,6 +50,7 @@ export async function middleware(request: NextRequest) {
     '/payments',
     '/agreements',
     '/maintenance',
+    '/finances',
     '/landlord',
   ];
 
