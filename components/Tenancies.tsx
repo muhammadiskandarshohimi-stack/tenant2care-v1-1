@@ -51,7 +51,7 @@ export default function Tenancies(){
  <form className="entry-form" onSubmit={submit}>
  <label>Approved applicant<select required disabled={busy} value={application} onChange={e=>choose(e.target.value)}><option value="">Select approved applicant</option>{eligible.map(a=><option key={a.id} value={a.id}>{a.full_name} — {rooms.find(r=>r.id===a.room_id)?.name}</option>)}</select></label>
  {!busy&&eligible.length===0&&<p>No approved applications with a reserved room are ready for tenancy creation.</p>}
- <label>Start date<input type="date" min="2000-01-01" max="2100-12-31" required value={start} onChange={e=>setStart(e.target.value)}/></label>
+ <label>Start date<input type="date" min="2000-01-01" max="2100-12-31" required value={start} onChange={e=>setStart(e.target.value)} onInput={e=>setStart(e.currentTarget.value)} onBlur={e=>setStart(e.currentTarget.value)}/></label>
  <label>Rental term<select required value={term} onChange={e=>setTerm(e.target.value)}><option value="6">6 months</option><option value="12">12 months</option></select></label>
  <label>Monthly rent (RM)<input type="number" min="0.01" max="100000000" step="0.01" required value={rent} onChange={e=>setRent(e.target.value)}/></label>
  <label>Deposit agreed (RM)<input type="number" min="0" max="100000000" step="0.01" required value={deposit} onChange={e=>setDeposit(e.target.value)}/></label>
