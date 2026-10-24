@@ -49,10 +49,11 @@ export async function middleware(request: NextRequest) {
     '/tenancies',
     '/payments',
     '/agreements',
+    '/maintenance',
     '/landlord',
   ];
 
-  const tenantRoutes = ['/tenant/apply'];
+  const tenantRoutes = ['/tenant/apply','/tenant/maintenance'];
 
   const matches = (prefix: string) =>
     path === prefix || path.startsWith(prefix + '/');
