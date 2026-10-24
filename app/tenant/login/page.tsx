@@ -47,7 +47,11 @@ export default function TenantLogin() {
 
         if (error) throw error;
 
-        router.replace('/tenant/apply');
+        const {data:{user},error:userError}=await supabase.auth.getUser();
+        if(userError||!user)throw Error('Unable to verify your session. Please sign in again.');
+        const {data:profile,error:profileError}=await supabase.from('profiles').select('role').eq('id',user.id).single();
+        if(profileError||!profile)throw Error('Unable to load your account role. Please try again.');
+        router.replace(profile.role==='landlord'?'/dashboard':'/tenant/dashboard');
         router.refresh();
       }
     } catch (err) {
