@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
@@ -103,6 +104,7 @@ export default function TenantLogin() {
           </button>
         </form>
 
+        {!register && <p><Link href="/forgot-password">Forgot password?</Link></p>}
         {message && <p role="status">{message}</p>}
 
         <button

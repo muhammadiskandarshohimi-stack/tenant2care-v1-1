@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -129,6 +130,7 @@ export default function LoginPage() {
         >
           {loading ? "Signing in..." : "Sign In"}
         </button>
+        <p style={{ textAlign: "center", marginTop: 20 }}><Link href="/forgot-password">Forgot password?</Link></p>
       </form>
     </main>
   );
