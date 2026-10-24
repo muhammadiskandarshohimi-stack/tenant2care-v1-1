@@ -57,7 +57,7 @@ export default function Overview(){
     {title:'Occupied rooms',value:stats.occupied,url:'/rooms'},
     {title:'Reserved rooms',value:stats.reserved,url:'/rooms'},
     {title:'Tenant applications',value:stats.applications,url:'/tenants'},
-    {title:'Tenancies',value:stats.tenancies,url:'/tenants'}
+    {title:'Tenancies',value:stats.tenancies,url:'/tenancies'}
   ];
   return <Shell>
     <div className="page-title t2c-heading"><div><p className="eyebrow">LANDLORD OVERVIEW</p><h1>Welcome to Tenant2Care</h1><p className="muted">Your rental portfolio at a glance</p></div><button type="button" className="secondary" onClick={()=>void refresh()} disabled={loading}>{loading?'Refreshing…':'Refresh dashboard'}</button></div>

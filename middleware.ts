@@ -46,6 +46,7 @@ export async function middleware(request: NextRequest) {
     '/properties',
     '/rooms',
     '/tenants',
+    '/tenancies',
     '/landlord',
   ];
 
