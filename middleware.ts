@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
     '/landlord',
   ];
 
-  const tenantRoutes = ['/tenant/apply','/tenant/maintenance'];
+  const tenantRoutes = ['/tenant/apply','/tenant/maintenance','/tenant/dashboard','/tenant/receipts'];
 
   const matches = (prefix: string) =>
     path === prefix || path.startsWith(prefix + '/');
