@@ -9,7 +9,7 @@ type Draft={id:string;tenancy_id:string;draft_version:number|null;status:string;
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 export default function Agreements(){
  const [tenancies,setTenancies]=useState<Tenancy[]>([]),[apps,setApps]=useState<App[]>([]),[rooms,setRooms]=useState<Room[]>([]),[drafts,setDrafts]=useState<Draft[]>([]);
- const [tenancy,setTenancy]=useState(''),[name,setName]=useState(''),[terms,setTerms]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
+ const [tenancy,setTenancy]=useState(''),[name,setName]=useState(''),[terms,setTerms]=useState(''),[details,setDetails]=useState<Record<string,string>>({payment_day:'1',utility_deposit:'0'}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const request=useRef<{signature:string;id:string}|null>(null);
  async function load(){
   setBusy(true);setError('');
@@ -30,7 +30,7 @@ export default function Agreements(){
  async function submit(e:React.FormEvent){
   e.preventDefault();if(busy)return;setError('');setMessage('');
   if(!tenancies.some(t=>t.id===tenancy&&['draft','active'].includes(t.status))||name.trim().length<2||terms.length>10000){setError('Select a tenancy and enter the landlord name.');return}
-  const payload={p_tenancy_id:tenancy,p_landlord_name:name.trim(),p_additional_terms:terms};
+  const payload={p_tenancy_id:tenancy,p_landlord_name:name.trim(),p_additional_terms:terms,p_details:details};
   const signature=JSON.stringify(payload);if(request.current?.signature!==signature)request.current={signature,id:crypto.randomUUID()};
   setBusy(true);
   try{
@@ -43,6 +43,10 @@ export default function Agreements(){
  <div className="columns"><section className="panel"><h2>Generate a draft</h2><form className="entry-form" onSubmit={submit}>
  <label>Tenancy<select required value={tenancy} disabled={busy} onChange={e=>setTenancy(e.target.value)}><option value="">Select tenancy</option>{tenancies.filter(t=>['draft','active'].includes(t.status)).map(t=><option key={t.id} value={t.id}>{label(t)} · {t.start_date} to {t.end_date}</option>)}</select></label>
  <label>Landlord full name<input required minLength={2} maxLength={160} value={name} onChange={e=>setName(e.target.value)}/></label>
+ <p className="muted">Format: Perjanjian Penyewaan Rumah untuk Kediaman (Bahasa Melayu). Tenant particulars, addresses, NRIC, rent and dates are copied from the selected tenancy.</p>
+ {([['landlord_nric','Landlord NRIC'],['tenant_occupation','Tenant occupation'],['witness_name','Witness full name'],['witness_nric','Witness NRIC'],['payment_method','Payment method'],['bank_name','Bank name'],['account_holder','Account holder'],['bank_account','Bank account number'],['payment_day','Monthly payment day (1–31)'],['utility_deposit','Utility portion of agreed deposit (RM)']] as const).map(([key,label])=><label key={key}>{label}<input type={key==='payment_day'||key==='utility_deposit'?'number':'text'} min={key==='payment_day'?1:key==='utility_deposit'?0:undefined} max={key==='payment_day'?31:undefined} step={key==='utility_deposit'?'0.01':key==='payment_day'?'1':undefined} maxLength={160} value={details[key]||''} onChange={e=>setDetails(prev=>({...prev,[key]:e.target.value}))}/></label>)}
+ <label>Furniture / inventory (one item per line)<textarea rows={4} maxLength={4000} value={details.inventory||''} onChange={e=>setDetails(prev=>({...prev,inventory:e.target.value}))} placeholder="Item and quantity for this property"/></label>
+ <p className="muted">The utility deposit is included in the tenancy's agreed deposit, not added to it. Leave missing particulars blank for completion in the draft. Dates and payment amounts are taken from the tenancy record.</p>
  <label>Additional terms for review<textarea rows={7} maxLength={10000} value={terms} onChange={e=>setTerms(e.target.value)} placeholder="Utilities, shared areas, deposit return, repair responsibilities, notice periods and inventory arrangements"/></label>
  <p className="muted">Each generation saves a new version with a copy of the current tenancy details. It does not sign the agreement or change tenancy/payment status.</p>
  <button disabled={busy||!tenancy} type="submit">{busy?'Please wait...':'Generate draft agreement'}</button>
