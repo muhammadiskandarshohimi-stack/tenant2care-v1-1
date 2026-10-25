@@ -81,6 +81,7 @@ export default function TenantLogin() {
       }}>
         <h1 style={{ color: '#b51677' }}>Tenant2Care</h1>
         <p>Tenant Portal</p>
+        <Link href="/login" className="btn secondary full" style={{display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>← Landlord Login</Link>
         <h2>{register ? 'Create Account' : 'Tenant Login'}</h2>
 
         <form onSubmit={submit}>
