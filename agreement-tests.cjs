@@ -7,7 +7,7 @@ function harness(){
  async rpc(name,args){calls.push([name,args]);if(fail)throw Error('Connection lost');rows.agreements=[{id:'draft',tenancy_id:'t',draft_version:1,status:'draft',created_at:'2026-10-24T00:00:00Z'}];return{data:'draft',error:null}}};
  const module={exports:{}};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/Agreements.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{module,exports:module.exports,process:{env:{}},Date,crypto:{randomUUID:()=>('request-'+(++next))},
- require(name){if(name==='react')return{useState(initial){const i=index++;if(!(i in state))state[i]=initial;return[state[i],v=>{state[i]=v}]},useRef(initial){const i=index++;return state[i]||={current:initial}},useEffect(fn){effects.push(fn)}};if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@supabase/ssr')return{createBrowserClient:()=>db};if(name==='./Management')return{Shell:'Shell'};if(name==='next/link')return{default:'Link'};throw Error(name)}
+ require(name){if(name==='react')return{useState(initial){const i=index++;if(!(i in state))state[i]=initial;return[state[i],v=>{state[i]=typeof v==='function'?v(state[i]):v}]},useRef(initial){const i=index++;return state[i]||={current:initial}},useEffect(fn){effects.push(fn)}};if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@supabase/ssr')return{createBrowserClient:()=>db};if(name==='./Management')return{Shell:'Shell'};if(name==='next/link')return{default:'Link'};throw Error(name)}
  });
  return{calls,render(){index=0;effects=[];return module.exports.default()},async mount(){this.render();effects.forEach(f=>f());await new Promise(r=>setImmediate(r))},succeed(){fail=false}};
 }
@@ -22,14 +22,14 @@ async function renderDraft(missing=false){
  const db={from(table){assert.equal(table,'agreements');const q={select(){return q},eq(k,v){filters.push([k,v]);return q},async single(){return{data:missing?null:{id:'11111111-1111-1111-1111-111111111111',draft_version:1,status:'draft',draft_snapshot:snapshot}}}};return q}};
  const jsx=(type,props)=>({type,props:props||{}});
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/agreements/[id]/page.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{module,exports:module.exports,Intl,
- require(name){if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@/lib/landlord')return{requireLandlord:async()=>({supabase:db,user:{id:'owner'}})};if(name==='next/navigation')return{notFound:()=>{throw Error('NOT_FOUND')}};if(name==='next/link')return{default:'Link'};if(name==='@/components/PrintReceipt')return{default:'PrintReceipt'};throw Error(name)}
+ require(name){if(name==='react/jsx-runtime')return{jsx,jsxs:jsx};if(name==='@/lib/landlord')return{requireLandlord:async()=>({supabase:db,user:{id:'owner'}})};if(name==='next/navigation')return{notFound:()=>{throw Error('NOT_FOUND')}};if(name==='next/link')return{default:'Link'};if(name==='@/components/PrintReceipt')return{default:'PrintReceipt'};if(name==='@/components/MalayAgreement')return{default:'MalayAgreement'};throw Error(name)}
  });
  const tree=await module.exports.default({params:Promise.resolve({id:'11111111-1111-1111-1111-111111111111'})});return{tree,filters};
 }
 (async()=>{
  const h=harness();await h.mount();change(h,'select',0,'t');await submit(h);assert.equal(h.calls.length,0);console.log('PASS landlord name required');
- change(h,'input',0,'Test Owner');change(h,'textarea',0,'TEST TERMS');await submit(h);await submit(h);assert.equal(h.calls[0][1].p_request_id,h.calls[1][1].p_request_id);assert(!text(h.render()).includes('Draft agreement saved'));console.log('PASS retry deduplication key retained without false success');
- change(h,'textarea',0,'REVISED TERMS');await submit(h);assert.notEqual(h.calls[2][1].p_request_id,h.calls[1][1].p_request_id);console.log('PASS changed terms use a new generation request');
+ change(h,'input',0,'Test Owner');change(h,'textarea',1,'TEST TERMS');await submit(h);await submit(h);assert.equal(h.calls[0][1].p_request_id,h.calls[1][1].p_request_id);assert(!text(h.render()).includes('Draft agreement saved'));console.log('PASS retry deduplication key retained without false success');
+ change(h,'textarea',1,'REVISED TERMS');await submit(h);assert.notEqual(h.calls[2][1].p_request_id,h.calls[1][1].p_request_id);console.log('PASS changed terms use a new generation request');
  h.succeed();await submit(h);assert.equal(h.calls.at(-1)[0],'phase6_create_agreement');assert(text(h.render()).includes('Draft agreement saved'));assert(text(h.render()).includes('Open draft / Print PDF'));console.log('PASS successful generation refreshes saved versions');
  const d=await renderDraft();const s=text(d.tree);assert(s.includes('UNSIGNED / UNSTAMPED'));assert(s.includes('450.00'));assert(s.includes('900.00'));assert(s.includes('2027-10-31'));assert(s.includes('[PROPERTY ADDRESS TO BE COMPLETED]'));assert(s.includes('TEST TERMS'));assert(d.filters.some(([k,v])=>k==='owner_id'&&v==='owner'));console.log('PASS draft renders frozen tenancy data, placeholders and unsigned status with owner-only query');
  await assert.rejects(()=>renderDraft(true),/NOT_FOUND/);console.log('PASS inaccessible agreement does not render');
