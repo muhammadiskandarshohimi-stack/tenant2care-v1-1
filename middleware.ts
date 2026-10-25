@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
   const matches = (prefix: string) =>
     path === prefix || path.startsWith(prefix + '/');
 
-  const isLandlordRoute = landlordRoutes.some(matches);
+  const isLandlordRoute = landlordRoutes.some(matches) && path !== '/landlord/register';
   const isTenantRoute = tenantRoutes.some(matches);
 
   if ((isLandlordRoute || isTenantRoute) && !user) {
