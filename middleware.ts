@@ -52,6 +52,7 @@ export async function middleware(request: NextRequest) {
     '/maintenance',
     '/finances',
     '/landlord',
+    '/settings',
   ];
 
   const tenantRoutes = ['/tenant/apply','/tenant/maintenance','/tenant/dashboard','/tenant/receipts'];
