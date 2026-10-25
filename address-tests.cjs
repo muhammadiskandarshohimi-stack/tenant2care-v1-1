@@ -1,0 +1,21 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),ts=require('typescript');
+const jsx=(type,props)=>({type,props:props||{}});
+const nodes=r=>!r||typeof r!=='object'?[]:Array.isArray(r)?r.flatMap(nodes):[r,...nodes(r.props?.children)];
+let state=[],idx=0,effects=[],calls=[];
+const moduleObject={exports:{}};
+const db={rpc:async(name,args)=>{calls.push([name,args]);return name==='phase3_available_rooms'?{data:[{room_id:'room',property_name:'Property',room_name:'Room',monthly_rent:450}]}:{data:'application-id'}}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('Phase3TenantApply.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{module:moduleObject,exports:moduleObject.exports,process:{env:{}},Error,require(n){if(n==='react/jsx-runtime')return{jsx,jsxs:jsx};if(n==='next/link')return{default:'Link'};if(n==='@supabase/ssr')return{createBrowserClient:()=>db};if(n==='react')return{useState(v){const i=idx++;if(!(i in state))state[i]=v;return[state[i],v=>state[i]=v]},useEffect(fn){effects.push(fn)}};throw Error(n)}});
+const render=()=>{idx=0;effects=[];return moduleObject.exports.default()};
+const controls=type=>nodes(render()).filter(n=>n.type===type);
+const change=(type,index,value)=>controls(type)[index].props.onChange({target:{value}});
+const submit=()=>controls('form')[0].props.onSubmit({preventDefault(){}});
+(async()=>{
+ render();effects.forEach(f=>f());await new Promise(r=>setImmediate(r));
+ assert.equal(controls('textarea').length,2);assert.equal(controls('textarea')[0].props.required,true);assert(!controls('textarea')[1].props.required);
+ change('select',0,'room');change('input',0,'Tenant');change('input',1,'000101-00-1234');change('input',2,'0123456789');
+ await submit();assert.equal(calls.filter(([name])=>name==='phase3_submit_application').length,0);
+ change('textarea',0,'  10 Jalan Test\n80000 Johor Bahru  ');change('textarea',1,'  20 Jalan Office\nJohor  ');await submit();
+ let args=calls.find(([name])=>name==='phase3_submit_application')[1];assert.equal(args.p_identity_card_number,'000101001234');assert.equal(args.p_address,'10 Jalan Test\n80000 Johor Bahru');assert.equal(args.p_working_address,'20 Jalan Office\nJohor');
+ change('select',0,'room');change('textarea',1,'');await submit();args=calls.filter(([name])=>name==='phase3_submit_application').at(-1)[1];assert.equal(args.p_working_address,'');
+ console.log('PASS home address required, working address optional, multiline values trimmed and sent to submission RPC');
+})().catch(e=>{console.error(e);process.exitCode=1});
