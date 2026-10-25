@@ -1,0 +1,31 @@
+BEGIN;
+CREATE TEMP TABLE photo_test_ids AS SELECT gen_random_uuid() tenant,gen_random_uuid() other_tenant,gen_random_uuid() landlord,gen_random_uuid() other_landlord,gen_random_uuid() property,gen_random_uuid() room,gen_random_uuid() photo;
+GRANT SELECT ON photo_test_ids TO authenticated;
+INSERT INTO auth.users(id,email,email_confirmed_at) SELECT tenant,'photo-test-'||tenant||'@example.invalid',now() FROM photo_test_ids UNION ALL SELECT other_tenant,'photo-test-'||other_tenant||'@example.invalid',now() FROM photo_test_ids UNION ALL SELECT landlord,'photo-test-'||landlord||'@example.invalid',now() FROM photo_test_ids UNION ALL SELECT other_landlord,'photo-test-'||other_landlord||'@example.invalid',now() FROM photo_test_ids;
+UPDATE public.profiles SET role='landlord' WHERE id IN(SELECT landlord FROM photo_test_ids UNION ALL SELECT other_landlord FROM photo_test_ids);
+INSERT INTO public.properties(id,owner_id,name) SELECT property,landlord,'Identity photo test' FROM photo_test_ids;
+INSERT INTO public.rooms(id,owner_id,property_id,name,monthly_rent,deposit_amount,status) SELECT room,landlord,property,'Test',100,100,'available' FROM photo_test_ids;
+SELECT set_config('request.jwt.claim.sub',tenant::text,true) FROM photo_test_ids;
+SET LOCAL ROLE authenticated;
+INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) SELECT 'tenant-identity-cards',tenant||'/'||photo||'.jpg',tenant::text,'{"mimetype":"image/jpeg","size":1000}'::jsonb FROM photo_test_ids;
+DO $test$
+DECLARE t photo_test_ids%rowtype; n integer;
+BEGIN
+ SELECT * INTO t FROM photo_test_ids;
+ IF has_function_privilege('authenticated','public.phase3_submit_application(uuid,text,text,integer,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'Old RPC bypass allowed'; END IF;
+ IF has_function_privilege('anon','public.phase3_submit_application(uuid,text,text,integer,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'Anonymous submission allowed'; END IF;
+ BEGIN PERFORM public.phase3_submit_application(t.room,'Test Tenant','0123456789',6,'10 Test Road','','000101001234',NULL);RAISE EXCEPTION 'Missing photo accepted';EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'A saved identity card photo is required' THEN RAISE; END IF;END;
+ BEGIN PERFORM public.phase3_submit_application(t.room,'Test Tenant','0123456789',6,'10 Test Road','','000101001234',t.other_tenant||'/'||t.photo||'.jpg');RAISE EXCEPTION 'Foreign photo accepted';EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'A saved identity card photo is required' THEN RAISE; END IF;END;
+ PERFORM public.phase3_submit_application(t.room,'Test Tenant','0123456789',6,'10 Test Road','','000101001234',t.tenant||'/'||t.photo||'.jpg');
+ SELECT count(*) INTO n FROM public.applications WHERE identity_card_photo_path=t.tenant||'/'||t.photo||'.jpg';IF n<>1 THEN RAISE EXCEPTION 'Application photo not linked'; END IF;
+END $test$;
+SELECT set_config('request.jwt.claim.sub',other_tenant::text,true) FROM photo_test_ids;
+DO $test$ BEGIN IF EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='tenant-identity-cards') THEN RAISE EXCEPTION 'Other tenant can see private photos';END IF;
+ BEGIN INSERT INTO storage.objects(bucket_id,name,owner_id) SELECT 'tenant-identity-cards',tenant||'/'||gen_random_uuid()||'.jpg',other_tenant::text FROM photo_test_ids;RAISE EXCEPTION 'Foreign upload allowed';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
+END $test$;
+SELECT set_config('request.jwt.claim.sub',landlord::text,true) FROM photo_test_ids;
+DO $test$ BEGIN IF NOT EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='tenant-identity-cards') THEN RAISE EXCEPTION 'Assigned landlord cannot see photo';END IF;END $test$;
+SELECT set_config('request.jwt.claim.sub',other_landlord::text,true) FROM photo_test_ids;
+DO $test$ BEGIN IF EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='tenant-identity-cards') THEN RAISE EXCEPTION 'Other landlord can see photos';END IF;END $test$;
+ROLLBACK;
+SELECT 'PASS mandatory photo, old RPC denied, own upload, application link, tenant and landlord isolation; all fixtures rolled back' AS result;
