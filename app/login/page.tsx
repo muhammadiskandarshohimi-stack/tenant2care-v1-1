@@ -73,7 +73,7 @@ export default function LoginPage() {
           color: "#666",
           marginBottom: "30px"
         }}>
-          Private Landlord Login
+          Landlord Login
         </p>
 
         <label htmlFor="email">Email Address</label>
@@ -131,6 +131,8 @@ export default function LoginPage() {
           {loading ? "Signing in..." : "Sign In"}
         </button>
         <p style={{ textAlign: "center", marginTop: 20 }}><Link href="/forgot-password">Forgot password?</Link></p>
+        <p style={{textAlign:"center"}}><Link href="/landlord/register">New landlord? Create an account</Link></p>
+        <p style={{textAlign:"center"}}><Link href="/tenant/login">Tenant login</Link></p>
       </form>
     </main>
   );
