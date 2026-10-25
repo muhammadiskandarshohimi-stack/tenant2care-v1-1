@@ -2,13 +2,15 @@ import {requireLandlord} from '@/lib/landlord';
 import {notFound} from 'next/navigation';
 import Link from 'next/link';
 import PrintReceipt from '@/components/PrintReceipt';
-type Snapshot={landlord_name:string;tenant_name:string;tenant_email:string;tenant_phone:string;property_name:string;property_address:string;room_name:string;start_date:string;end_date:string;term_months:number;monthly_rent:number;deposit_amount:number;additional_terms:string};
+import MalayAgreement, {type MalayAgreementSnapshot} from '@/components/MalayAgreement';
+type Snapshot=MalayAgreementSnapshot;
 export default async function Page({params}:{params:Promise<{id:string}>}){
  const {id}=await params;if(!/^[0-9a-f-]{36}$/i.test(id))notFound();
  const {supabase,user}=await requireLandlord();
  const {data:d,error}=await supabase.from('agreements').select('id,draft_version,status,created_at,draft_snapshot').eq('id',id).eq('owner_id',user.id).single();
  if(error||!d||!d.draft_snapshot)notFound();
  const s=d.draft_snapshot as Snapshot;
+ if(s.template_version===2)return <MalayAgreement snapshot={s} id={d.id} version={d.draft_version}/>;
  const money=(v:number)=>new Intl.NumberFormat('en-MY',{style:'currency',currency:'MYR'}).format(Number(v));
  return <main style={{maxWidth:800,margin:'32px auto',padding:32,background:'white',color:'#222',lineHeight:1.6,overflowWrap:'anywhere'}}>
  <style>{'@media print{.no-print{display:none!important}body{background:white}main{margin:0!important;padding:0!important}.signatures{break-inside:avoid}h2{break-after:avoid}}'}</style>
