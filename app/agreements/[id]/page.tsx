@@ -7,7 +7,7 @@ type Snapshot=MalayAgreementSnapshot;
 export default async function Page({params}:{params:Promise<{id:string}>}){
  const {id}=await params;if(!/^[0-9a-f-]{36}$/i.test(id))notFound();
  const {supabase,user}=await requireLandlord();
- const {data:d,error}=await supabase.from('agreements').select('id,draft_version,status,created_at,draft_snapshot').eq('id',id).eq('owner_id',user.id).single();
+ const {data:d,error}=await supabase.from('agreements').select('id,draft_version,status,created_at,draft_snapshot').eq('id',id).eq('owner_id',user.id).is('deleted_at',null).single();
  if(error||!d||!d.draft_snapshot)notFound();
  const s=d.draft_snapshot as Snapshot;
  if(s.template_version===2)return <MalayAgreement snapshot={s} id={d.id} version={d.draft_version}/>;
