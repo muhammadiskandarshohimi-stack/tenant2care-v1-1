@@ -1,0 +1,56 @@
+// Run: npm install --no-save --package-lock=false @electric-sql/pglite
+// Then: node shared-room-db-tests.cjs. Uses a disposable database only.
+const {PGlite}=require('@electric-sql/pglite');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+(async()=>{
+const db=new PGlite();
+await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE SCHEMA auth;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
+CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz);
+CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text);
+CREATE TABLE public.properties(id uuid PRIMARY KEY,owner_id uuid,name text);
+CREATE TABLE public.rooms(id uuid PRIMARY KEY,owner_id uuid,property_id uuid,name text,monthly_rent numeric,deposit_amount numeric,status text);
+CREATE TABLE public.applications(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),owner_id uuid,property_id uuid,room_id uuid,full_name text,email text,phone text,requested_term_months integer,status text,applicant_user_id uuid,tenant_id uuid,reviewed_at timestamptz,reviewed_by uuid);
+CREATE TABLE public.tenancies(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),owner_id uuid,application_id uuid,room_id uuid,tenant_id uuid,start_date date,term_months integer,end_date date,monthly_rent numeric,deposit_amount numeric,status text);
+CREATE UNIQUE INDEX phase4_one_open_tenancy_per_room ON public.tenancies(room_id) WHERE status IN ('draft','active');
+INSERT INTO auth.users VALUES ('${id(1)}','owner@example.test',now()),('${id(2)}','tenant1@example.test',now()),('${id(3)}','tenant2@example.test',now()),('${id(4)}','tenant3@example.test',now());
+INSERT INTO public.profiles VALUES ('${id(1)}','landlord'),('${id(2)}','tenant'),('${id(3)}','tenant'),('${id(4)}','tenant');
+INSERT INTO public.properties VALUES ('${id(10)}','${id(1)}','Test property');
+INSERT INTO public.rooms VALUES ('${id(20)}','${id(1)}','${id(10)}','Room 1',450,900,'available'),('${id(21)}','${id(1)}','${id(10)}','Room 3',350,700,'available');`);
+const migration=fs.readFileSync('supabase/shared_room_capacity.sql','utf8');
+await db.exec(migration);await db.exec(migration); // safe reapplication
+await db.exec(`UPDATE rooms SET capacity=2 WHERE id='${id(20)}'`);
+const as=async n=>db.query("SELECT set_config('test.uid',$1,false)",[id(n)]);
+const scalar=async(sql,args=[])=>Object.values((await db.query(sql,args)).rows[0])[0];
+const apply=async n=>{await as(n);return scalar('SELECT phase3_submit_application($1,$2,$3,12)',[id(20),`Tenant ${n}`,'0123456789']);};
+const a=await apply(2),b=await apply(3),c=await apply(4);
+await as(1);
+await db.query("SELECT phase3_review_application($1,'approved')",[a]);
+await as(4);assert.equal((await db.query('SELECT * FROM phase3_available_rooms()')).rows.length,2);
+await as(1);await db.query("SELECT phase3_review_application($1,'approved')",[b]);
+await assert.rejects(db.query("SELECT phase3_review_application($1,'approved')",[c]),/no available/);
+assert.equal(Number(await scalar('SELECT room_allocated_places($1)',[id(20)])),2);
+assert.equal((await db.query('SELECT * FROM phase3_available_rooms()')).rows.length,1);
+console.log('PASS two reservations allowed; third approval rejected; full shared room hidden');
+const create=async app=>scalar("SELECT phase4_create_tenancy($1,current_date,12,450,900)",[app]);
+const t1=await create(a),t2=await create(b);
+assert.equal(Number(await scalar('SELECT room_allocated_places($1)',[id(20)])),2);
+await assert.rejects(create(a),/already exists/);
+await db.query('SELECT phase5_activate_tenancy($1)',[t1]);
+await db.query('SELECT phase5_activate_tenancy($1)',[t2]);
+assert.equal(await scalar('SELECT status FROM rooms WHERE id=$1',[id(20)]),'occupied');
+console.log('PASS two independent tenancies activate; reservation is not double counted; duplicate blocked');
+await assert.rejects(db.query('UPDATE rooms SET capacity=1 WHERE id=$1',[id(20)]),/below existing/);
+await db.query("UPDATE tenancies SET status='ended' WHERE id=$1",[t1]);
+assert.equal(Number(await scalar('SELECT room_allocated_places($1)',[id(20)])),1);
+assert.equal(await scalar('SELECT status FROM rooms WHERE id=$1',[id(20)]),'occupied');
+assert.equal((await db.query('SELECT * FROM phase3_available_rooms()')).rows.length,2);
+await db.query("SELECT phase3_review_application($1,'approved')",[c]);
+console.log('PASS ending one tenancy frees one place without clearing other occupant; capacity reduction blocked');
+await as(2);await assert.rejects(create(c),/Not authorized/);
+await as(1);await db.query("UPDATE rooms SET status='inactive' WHERE id=$1",[id(20)]);
+assert.equal((await db.query('SELECT * FROM phase3_available_rooms()')).rows.length,1);
+console.log('PASS unauthorized tenancy creation rejected; inactive room excluded');
+await db.close();
+})().catch(e=>{console.error(e);process.exitCode=1});
