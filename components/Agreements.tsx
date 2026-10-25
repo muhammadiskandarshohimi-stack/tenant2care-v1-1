@@ -6,11 +6,11 @@ import {Shell} from './Management';
 import {inventoryText,type LandlordSettings,type PropertyInventory} from '@/lib/agreement-settings';
 type Tenancy={id:string;application_id:string;room_id:string;status:string;start_date:string;end_date:string};
 type App={id:string;full_name:string};type Room={id:string;name:string;property_id:string};
-type Draft={id:string;tenancy_id:string;draft_version:number|null;status:string;created_at:string};
+type Draft={id:string;tenancy_id:string;draft_version:number|null;status:string;created_at:string;deleted_at?:string|null};
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 export default function Agreements(){
  const [tenancies,setTenancies]=useState<Tenancy[]>([]),[apps,setApps]=useState<App[]>([]),[rooms,setRooms]=useState<Room[]>([]),[drafts,setDrafts]=useState<Draft[]>([]);
- const [settings,setSettings]=useState<LandlordSettings|null>(null),[inventories,setInventories]=useState<PropertyInventory[]>([]);
+ const [showDeleted,setShowDeleted]=useState(false),[settings,setSettings]=useState<LandlordSettings|null>(null),[inventories,setInventories]=useState<PropertyInventory[]>([]);
  const [tenancy,setTenancy]=useState(''),[terms,setTerms]=useState(''),[details,setDetails]=useState<Record<string,string>>({utility_deposit:'0',tenant_occupation:''});
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const request=useRef<{signature:string;id:string}|null>(null);
@@ -19,13 +19,18 @@ export default function Agreements(){
   const [t,a,r,d,s,i]=await Promise.all([
    db.from('tenancies').select('id,application_id,room_id,status,start_date,end_date').eq('owner_id',user.id).order('created_at',{ascending:false}),
    db.from('applications').select('id,full_name').eq('owner_id',user.id),db.from('rooms').select('id,name,property_id').eq('owner_id',user.id),
-   db.from('agreements').select('id,tenancy_id,draft_version,status,created_at').eq('owner_id',user.id).order('created_at',{ascending:false}),
+   db.from('agreements').select('id,tenancy_id,draft_version,status,created_at,deleted_at').eq('owner_id',user.id).order('created_at',{ascending:false}),
    db.from('landlord_agreement_settings').select('*').eq('owner_id',user.id).maybeSingle(),db.from('property_inventories').select('*').eq('owner_id',user.id)
   ]);
   const failure=[t.error,a.error,r.error,d.error,s.error,i.error].find(Boolean);if(failure)throw failure;
   setTenancies(t.data||[]);setApps(a.data||[]);setRooms(r.data||[]);setDrafts(d.data||[]);setSettings(s.data);setInventories(i.data||[]);
  }catch(e){setError(e&&typeof e==='object'&&'message'in e?String(e.message):'Unable to load agreements.')}finally{setBusy(false)}}
  useEffect(()=>{void load()},[]);
+ async function setDeleted(d:Draft,deleted:boolean){
+  if(busy||!window.confirm(deleted?'Move this agreement to Deleted agreements? You can restore it later. Tenancy and payment records stay unchanged.':'Restore this agreement?'))return;
+  setBusy(true);setError('');setMessage('');try{const {error}=await db.rpc('phase11_set_agreement_deleted',{p_agreement_id:d.id,p_deleted:deleted});if(error)throw error;await load();setMessage(deleted?'Agreement moved to Deleted agreements.':'Agreement restored.');}catch(e){setError(e&&typeof e==='object'&&'message'in e?String(e.message):'Unable to update agreement.');}finally{setBusy(false)}
+ }
+ const visibleDrafts=drafts.filter(d=>showDeleted?!!d.deleted_at:!d.deleted_at);
  const selected=tenancies.find(t=>t.id===tenancy),room=rooms.find(r=>r.id===selected?.room_id);
  const inventory=inventories.find(i=>i.property_id===room?.property_id);
  const label=(t:Tenancy)=>[apps.find(a=>a.id===t.application_id)?.full_name||'Tenant',rooms.find(r=>r.id===t.room_id)?.name||'Room'].join(' — ');
@@ -49,5 +54,5 @@ export default function Agreements(){
  <p className="muted">New drafts use the latest saved settings. Existing saved agreement versions retain their original details and inventory.</p>
  <button disabled={busy||!tenancy||!settings} type="submit">{busy?'Please wait...':'Generate draft agreement'}</button>
  </form>{error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status" className="success">{message}</p>}</section>
- <section className="panel"><h2>Saved agreements ({drafts.length})</h2>{drafts.map(d=>{const t=tenancies.find(t=>t.id===d.tenancy_id);return <article className="record" key={d.id}><div><strong>{t?label(t):'Tenancy'}</strong><p>Version {d.draft_version??'legacy'} · {d.status} · {new Date(d.created_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})}</p>{d.draft_version!==null&&<Link className="btn" href={'/agreements/'+d.id}>Open draft / Print PDF</Link>}</div></article>})}{!busy&&drafts.length===0&&<p>No draft agreements yet.</p>}</section></div></Shell>;
+ <section className="panel"><h2>{showDeleted?'Deleted agreements':'Saved agreements'} ({visibleDrafts.length})</h2><button className="secondary" type="button" onClick={()=>setShowDeleted(v=>!v)}>{showDeleted?'Show saved agreements':`Deleted agreements (${drafts.filter(d=>d.deleted_at).length})`}</button>{visibleDrafts.map(d=>{const t=tenancies.find(t=>t.id===d.tenancy_id);return <article className="record" key={d.id}><div><strong>{t?label(t):'Tenancy'}</strong><p>Version {d.draft_version??'legacy'} · {d.status} · {new Date(d.created_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})}</p>{!d.deleted_at&&d.draft_version!==null&&<Link className="btn" href={'/agreements/'+d.id}>Open draft / Print PDF</Link>}<button className={d.deleted_at?'secondary':'danger'} type="button" disabled={busy} style={{marginLeft:8}} onClick={()=>void setDeleted(d,!d.deleted_at)}>{d.deleted_at?'Restore':'Delete'}</button></div></article>})}{!busy&&visibleDrafts.length===0&&<p>{showDeleted?'No deleted agreements.':'No draft agreements yet.'}</p>}</section></div></Shell>;
 }
