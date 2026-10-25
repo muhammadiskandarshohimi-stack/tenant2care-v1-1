@@ -1,9 +1,9 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),ts=require('typescript');
-function harness({status='approved',room='reserved',existing=false,failure=null}={}){
+function harness({status='approved',room='reserved',existing=false,failure=null,capacity=1,otherTenancies=0}={}){
  let state=[],index=0,effects=[],calls=[],filters=[];
  const applications=[{id:'app-test',room_id:'room-test',full_name:'Test Tenant',requested_term_months:12,status}];
- const rooms=[{id:'room-test',name:'Test Room',monthly_rent:450,deposit_amount:900,status:room}];
- let tenancies=existing?[{id:'existing',application_id:'app-test',room_id:'room-test',status:'draft'}]:[];
+ const rooms=[{id:'room-test',name:'Test Room',monthly_rent:450,deposit_amount:900,status:room,capacity}];
+ let tenancies=existing?[{id:'existing',application_id:'app-test',room_id:'room-test',status:'draft'}]:Array.from({length:otherTenancies},(_,i)=>({id:'other'+i,application_id:'other-app'+i,room_id:'room-test',status:'active'}));
  const jsx=(type,props)=>({type,props:props||{}});
  const db={auth:{getUser:async()=>({data:{user:{id:'owner-test'}}})},from(table){const q={select(){return q},eq(k,v){filters.push([table,k,v]);return q},order(){return q},then(resolve,reject){return Promise.resolve({data:table==='applications'?applications:table==='rooms'?rooms:tenancies}).then(resolve,reject)}};return q},
  async rpc(name,args){calls.push([name,args]);if(failure)return{error:failure};tenancies=[{id:'new',application_id:args.p_application_id,room_id:'room-test',start_date:args.p_start_date,end_date:'2027-10-31',term_months:args.p_term_months,monthly_rent:args.p_monthly_rent,deposit_amount:args.p_deposit_amount,status:'draft'}];return{error:null}}};
@@ -24,6 +24,8 @@ const text=(h,pattern)=>nodes(h.render()).some(n=>typeof n.props.children==='str
  change(h,'select',0,'app-test');assert.equal(all(h,'select')[1].props.value,'12');assert.equal(all(h,'input')[1].props.value,'450');assert.equal(all(h,'input')[2].props.value,'900');
  console.log('PASS eligible approved applicant prefills term, rent and deposit with owner-scoped reads');
  for(const options of [{status:'submitted'},{status:'rejected'},{room:'occupied'},{existing:true}]){let x=harness(options);await x.mount();assert.equal(all(x,'option').filter(n=>n.props.value==='app-test').length,0)}
+ for(const [count,want] of [[0,1],[1,1],[2,0]]){const shared=harness({room:'occupied',capacity:2,otherTenancies:count});await shared.mount();assert.equal(all(shared,'option').filter(n=>n.props.value==='app-test').length,want)}
+ console.log('PASS shared room second tenant eligible; third tenant excluded');
  console.log('PASS unapproved, unavailable and already-linked applications are excluded');
  all(h,'input')[0].props.onInput({currentTarget:{value:'2026-11-01'}});all(h,'input')[0].props.onBlur({currentTarget:{value:'2026-11-01'}});change(h,'input',1,'-1');await submit(h);assert.equal(h.calls.length,0);
  change(h,'input',1,'450');change(h,'input',2,'-5');await submit(h);assert.equal(h.calls.length,0);

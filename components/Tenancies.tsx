@@ -4,7 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { Shell } from './Management';
 import TenancyActions from './TenancyActions';
 type Application={id:string;room_id:string;full_name:string;requested_term_months:number;status:string};
-type Room={id:string;name:string;monthly_rent:number;deposit_amount:number;status:string};
+type Room={id:string;name:string;monthly_rent:number;deposit_amount:number;status:string;capacity?:number};
 type Tenancy={id:string;application_id:string;room_id:string;start_date:string;end_date:string;term_months:number;monthly_rent:number;deposit_amount:number;status:string};
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 const money=(n:number)=>new Intl.NumberFormat('en-MY',{style:'currency',currency:'MYR'}).format(Number(n));
@@ -19,7 +19,7 @@ export default function Tenancies(){
    if(authError||!user)throw Error('Sign in again.');
    const [a,r,t]=await Promise.all([
     db.from('applications').select('id,room_id,full_name,requested_term_months,status').eq('owner_id',user.id).order('created_at',{ascending:false}),
-    db.from('rooms').select('id,name,monthly_rent,deposit_amount,status').eq('owner_id',user.id),
+    db.from('rooms').select('id,name,monthly_rent,deposit_amount,status,capacity').eq('owner_id',user.id),
     db.from('tenancies').select('id,application_id,room_id,start_date,end_date,term_months,monthly_rent,deposit_amount,status').eq('owner_id',user.id).order('created_at',{ascending:false})
    ]);
    const problem=[a.error,r.error,t.error].find(Boolean);if(problem)throw problem;
@@ -28,7 +28,7 @@ export default function Tenancies(){
   finally{setBusy(false)}
  }
  useEffect(()=>{void load()},[]);
- const eligible=apps.filter(a=>a.status==='approved'&&rooms.some(r=>r.id===a.room_id&&r.status==='reserved')&&!rows.some(t=>(t.application_id===a.id||t.room_id===a.room_id)&&['draft','active'].includes(t.status)));
+ const eligible=apps.filter(a=>a.status==='approved'&&rooms.some(r=>r.id===a.room_id&&(r.status==='reserved'||(r.status==='occupied'&&(r.capacity??1)>1))&&rows.filter(t=>t.room_id===r.id&&['draft','active'].includes(t.status)).length<(r.capacity??1))&&!rows.some(t=>t.application_id===a.id&&['draft','active'].includes(t.status)));
  function choose(id:string){
   setApplication(id);setMessage('');setError('');
   const a=apps.find(x=>x.id===id),r=rooms.find(x=>x.id===a?.room_id);
@@ -51,11 +51,11 @@ export default function Tenancies(){
  <div className="columns"><section className="panel"><h2>Create draft tenancy</h2>
  <form className="entry-form" onSubmit={submit}>
  <label>Approved applicant<select required disabled={busy} value={application} onChange={e=>choose(e.target.value)}><option value="">Select approved applicant</option>{eligible.map(a=><option key={a.id} value={a.id}>{a.full_name} — {rooms.find(r=>r.id===a.room_id)?.name}</option>)}</select></label>
- {!busy&&eligible.length===0&&<p>No approved applications with a reserved room are ready for tenancy creation.</p>}
+ {!busy&&eligible.length===0&&<p>No approved applications have a free tenancy place. Check the room capacity and existing tenancies.</p>}
  <label>Start date<input type="date" min="2000-01-01" max="2100-12-31" required value={start} onChange={e=>setStart(e.target.value)} onInput={e=>setStart(e.currentTarget.value)} onBlur={e=>setStart(e.currentTarget.value)}/></label>
  <label>Rental term<select required value={term} onChange={e=>setTerm(e.target.value)}><option value="6">6 months</option><option value="12">12 months</option></select></label>
- <label>Monthly rent (RM)<input type="number" min="0.01" max="100000000" step="0.01" required value={rent} onChange={e=>setRent(e.target.value)}/></label>
- <label>Deposit agreed (RM)<input type="number" min="0" max="100000000" step="0.01" required value={deposit} onChange={e=>setDeposit(e.target.value)}/></label>
+ <label>Monthly rent per tenant (RM)<input type="number" min="0.01" max="100000000" step="0.01" required value={rent} onChange={e=>setRent(e.target.value)}/></label>
+ <label>Deposit per tenant (RM)<input type="number" min="0" max="100000000" step="0.01" required value={deposit} onChange={e=>setDeposit(e.target.value)}/></label>
  <p className="muted">End date is calculated as start date plus the rental term, minus one day. Deposit is the agreed amount, not a receipt of payment.</p>
  <button disabled={busy||!application} type="submit">{busy?'Please wait...':'Create draft tenancy'}</button>
  </form>{error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status" className="success">{message}</p>}
