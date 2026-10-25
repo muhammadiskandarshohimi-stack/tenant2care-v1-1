@@ -2,12 +2,14 @@
 'use client';
 
 import { useState } from 'react';
+import WhatsAppLogin from '@/components/WhatsAppLogin';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function TenantLogin() {
   const router = useRouter();
+  const [method, setMethod] = useState<'whatsapp' | 'email'>('whatsapp');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [register, setRegister] = useState(false);
@@ -81,6 +83,11 @@ export default function TenantLogin() {
       }}>
         <h1 style={{ color: '#b51677' }}>Tenant2Care</h1>
         <p>Tenant Portal</p>
+        <div className="form-actions" role="group" aria-label="Choose login method" style={{marginBottom: 20}}>
+          <button className={method === 'whatsapp' ? 'btn' : 'btn secondary'} type="button" aria-pressed={method === 'whatsapp'} onClick={() => setMethod('whatsapp')}>WhatsApp</button>
+          <button className={method === 'email' ? 'btn' : 'btn secondary'} type="button" aria-pressed={method === 'email'} onClick={() => setMethod('email')}>Email</button>
+        </div>
+        {method === 'whatsapp' ? <WhatsAppLogin/> : <>
         <h2>{register ? 'Create Account' : 'Tenant Login'}</h2>
 
         <form onSubmit={submit}>
@@ -129,6 +136,7 @@ export default function TenantLogin() {
             ? 'Already registered? Sign in'
             : 'New tenant? Create account'}
         </button>
+        </>}
       </section>
     </main>
   );
