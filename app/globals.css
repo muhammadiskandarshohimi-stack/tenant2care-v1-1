@@ -680,3 +680,19 @@ button.t2c-tenant-action:hover{
 @media(max-width:700px){.t2c-tenant-layout{grid-template-columns:minmax(0,1fr);gap:12px}.t2c-tenant-sidebar{position:static}.t2c-tenant-sidebar .t2c-tenant-actions{gap:8px!important}.t2c-tenant-sidebar .t2c-tenant-action{min-height:48px!important}}
 
 .t2c-receipt-form{margin:20px 0}.t2c-receipt-form label{display:block;margin:12px 0}.t2c-receipt-form input:not([type=file]),.t2c-receipt-form select{display:block;width:100%;padding:12px;margin-top:6px}.t2c-receipt-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0}.t2c-receipt-controls button{min-height:46px}.t2c-receipt-form .record{margin:12px 0;padding:15px;border-radius:12px}
+
+/* Tenancy agreement is an official black-and-white document in both device themes. */
+.malay-agreement,.t2c-agreement-document{background:#fff!important;background-image:none!important;color:#000!important;color-scheme:light!important;box-shadow:none!important}
+.malay-agreement :is(h1,h2,h3,h4,h5,h6,p,span,strong,b,em,small,dt,dd,li,ol,ul,div,section,nav,a,th,td,label),
+.t2c-agreement-document :is(h1,h2,h3,h4,h5,h6,p,span,strong,b,em,small,dt,dd,li,ol,ul,div,section,nav,a,th,td,label){color:#000!important;-webkit-text-fill-color:#000!important}
+.malay-agreement :is(section,div,table,thead,tbody,tr,td,th,.agreement-review,.agreement-cover,.agreement-draft),
+.t2c-agreement-document :is(section,div,table,thead,tbody,tr,td,th){background-color:transparent!important;background-image:none!important;border-color:#555!important;box-shadow:none!important}
+.malay-agreement .agreement-review{background:#fff!important;border:1px solid #888!important}
+.malay-agreement a,.t2c-agreement-document a{text-decoration:underline!important}
+@media print{
+ html,body{background:#fff!important;color:#000!important;color-scheme:light!important;-webkit-print-color-adjust:economy;print-color-adjust:economy}
+ body::before,.t2c-global-language,.t2c-back-dashboard{display:none!important}
+ .malay-agreement,.t2c-agreement-document{background:#fff!important;color:#000!important;border:0!important;box-shadow:none!important}
+ .malay-agreement *,.t2c-agreement-document *{color:#000!important;-webkit-text-fill-color:#000!important;text-shadow:none!important}
+ .malay-agreement .no-print,.t2c-agreement-document .no-print{display:none!important}
+}
