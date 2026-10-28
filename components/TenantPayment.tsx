@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
+import TenantReceiptUpload from './TenantReceiptUpload';
 import {createBrowserClient} from '@supabase/ssr';
 import {useLanguage,tr} from './LanguageSwitcher';
 
@@ -65,6 +66,7 @@ export default function TenantPayment(){
     </div>}
    </>}
   </section>
+  <TenantReceiptUpload/>
   <p><Link className="t2c-pay-save" href="/tenant/dashboard">← {t('Back to Dashboard','Kembali ke Papan Pemuka')}</Link></p>
  </main>;
 }

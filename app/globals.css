@@ -678,3 +678,5 @@ button.t2c-tenant-action:hover{
 .t2c-tenant-sidebar .t2c-tenant-action{display:flex!important;justify-content:flex-start!important;text-align:left!important;flex:unset!important;width:100%!important;min-width:0!important;font-size:14px!important;white-space:normal}
 .t2c-tenant-content{min-width:0}
 @media(max-width:700px){.t2c-tenant-layout{grid-template-columns:minmax(0,1fr);gap:12px}.t2c-tenant-sidebar{position:static}.t2c-tenant-sidebar .t2c-tenant-actions{gap:8px!important}.t2c-tenant-sidebar .t2c-tenant-action{min-height:48px!important}}
+
+.t2c-receipt-form{margin:20px 0}.t2c-receipt-form label{display:block;margin:12px 0}.t2c-receipt-form input:not([type=file]),.t2c-receipt-form select{display:block;width:100%;padding:12px;margin-top:6px}.t2c-receipt-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0}.t2c-receipt-controls button{min-height:46px}.t2c-receipt-form .record{margin:12px 0;padding:15px;border-radius:12px}
