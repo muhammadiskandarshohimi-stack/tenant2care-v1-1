@@ -597,3 +597,58 @@ a:not(.btn):not(.t2c-quick a):not(.t2c-back-dashboard){text-decoration-color:var
 @media(max-width:900px){.sidebar{min-height:0;display:block}.sidebar .t2c-desktop-logout{display:none}.t2c-mobile-logout{display:block;margin-top:18px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}}
 /* Increase illustration definition without competing with content text. */
 body::before{background-size:380px 300px;opacity:var(--tc-doodle-opacity)}
+
+/* Tenant dashboard actions: explicit colours override inline styles and browser forced-dark defaults. */
+.t2c-tenant-actions{position:relative;z-index:1}
+.t2c-tenant-actions .t2c-tenant-action,
+button.t2c-tenant-action{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  min-height:48px!important;
+  background:var(--tc-panel)!important;
+  color:var(--tc-text)!important;
+  -webkit-text-fill-color:var(--tc-text)!important;
+  border:1.5px solid var(--tc-border)!important;
+  border-radius:14px!important;
+  box-shadow:0 3px 10px #00000012!important;
+  opacity:1;
+  font-size:15px!important;
+  font-weight:750!important;
+  line-height:1.35!important;
+  text-decoration:none!important;
+}
+.t2c-tenant-actions .t2c-tenant-action svg,
+button.t2c-tenant-action svg{
+  color:var(--tc-accent-strong)!important;
+  stroke:currentColor!important;
+  flex-shrink:0;
+}
+.t2c-tenant-actions .t2c-tenant-action:hover,
+.t2c-tenant-actions .t2c-tenant-action:focus-visible,
+button.t2c-tenant-action:hover{
+  background:var(--tc-soft)!important;
+  border-color:var(--tc-accent)!important;
+}
+@media(prefers-color-scheme:dark){
+  .t2c-tenant-actions .t2c-tenant-action,
+  button.t2c-tenant-action{
+    background:#273541!important;
+    color:#F8FAFC!important;
+    -webkit-text-fill-color:#F8FAFC!important;
+    border-color:#7B929E!important;
+    box-shadow:0 2px 10px #0005!important;
+  }
+  .t2c-tenant-actions .t2c-tenant-action svg,
+  button.t2c-tenant-action svg{
+    color:#71E6CE!important;
+    stroke:#71E6CE!important;
+  }
+  .t2c-tenant-actions .t2c-tenant-action:hover,
+  button.t2c-tenant-action:hover{background:#334653!important}
+}
+@media(max-width:600px){
+  .t2c-tenant-actions{gap:10px!important}
+  .t2c-tenant-actions .t2c-tenant-action{flex:1 1 145px;min-width:0;text-align:center}
+}
