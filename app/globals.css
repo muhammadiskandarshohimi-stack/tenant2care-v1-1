@@ -696,3 +696,14 @@ button.t2c-tenant-action:hover{
  .malay-agreement *,.t2c-agreement-document *{color:#000!important;-webkit-text-fill-color:#000!important;text-shadow:none!important}
  .malay-agreement .no-print,.t2c-agreement-document .no-print{display:none!important}
 }
+
+/* Payment method switches: QR popup or copyable bank transfer, never both */
+.t2c-pay-choices{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
+.t2c-pay-choices button{flex:1 1 180px;min-height:54px;padding:12px 16px;border:1px solid var(--tc-border)!important;background:var(--tc-panel)!important;color:var(--tc-text)!important;border-radius:14px;font-weight:750}
+.t2c-pay-choices button.chosen{background:var(--tc-accent-strong)!important;color:var(--tc-on-accent)!important;border-color:var(--tc-accent-strong)!important}
+.t2c-qr-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.t2c-qr-dialog{background:var(--tc-panel);color:var(--tc-text);border:1px solid var(--tc-border);border-radius:20px;padding:20px;width:min(100%,520px);max-height:calc(100dvh - 40px);overflow:auto;box-shadow:0 20px 80px #0008}
+.t2c-qr-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.t2c-qr-dialog-head h2{margin:0}
+.t2c-qr-dialog-head button{min-width:44px;min-height:44px}
+.t2c-qr-dialog .t2c-qr-frame{width:min(100%,340px)}

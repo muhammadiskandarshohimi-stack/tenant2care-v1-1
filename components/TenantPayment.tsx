@@ -11,7 +11,8 @@ export default function TenantPayment(){
  const lang=useLanguage();const t=(en:string,my:string)=>tr(lang,en,my);
  const [properties,setProperties]=useState<PaymentProperty[]>([]);
  const [propertyId,setPropertyId]=useState('');
- const [method,setMethod]=useState<'qr'|'transfer'>('qr');
+ const [method,setMethod]=useState<'qr'|'transfer'|null>(null);
+ const [qrOpen,setQrOpen]=useState(false);
  const [busy,setBusy]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
  useEffect(()=>{
   let active=true;
@@ -27,7 +28,7 @@ export default function TenantPayment(){
  const selected=properties.find(p=>p.property_id===propertyId);
  const validQR=selected?.qr_path?.startsWith('/payment-qr-')&&selected.qr_path.endsWith('.png')?selected.qr_path:null;
  const account=selected?.bank_account?.trim()||'';
- const ready=method==='qr'?!!validQR:!!(selected?.bank_name&&selected?.account_holder&&account);
+ const ready=method==='qr'?!!validQR:method==='transfer'?!!(selected?.bank_name&&selected?.account_holder&&account):false;
  async function copy(value:string){
   try{await navigator.clipboard.writeText(value);setNotice(t('Copied.','Disalin.'))}
   catch{setNotice(t('Please copy the number manually.','Sila salin nombor secara manual.'))}
@@ -41,29 +42,38 @@ export default function TenantPayment(){
    {busy&&<p role="status">{t('Loading approved properties...','Memuatkan hartanah yang diluluskan...')}</p>}
    {error&&<p className="error" role="alert">{error}</p>}
    {!busy&&!error&&properties.length===0&&<p className="muted">{t('No approved property is linked to your account yet. Payment instructions will appear after landlord approval.','Belum ada hartanah diluluskan yang dipautkan ke akaun anda. Arahan bayaran akan dipaparkan selepas kelulusan tuan rumah.')}</p>}
-   {properties.length>1&&<label htmlFor="tenant-pay-property">{t('Approved property','Hartanah diluluskan')}<select id="tenant-pay-property" value={propertyId} onChange={e=>setPropertyId(e.target.value)}><option value="">{t('Choose approved property','Pilih hartanah diluluskan')}</option>{properties.map(p=><option key={p.property_id} value={p.property_id}>{p.property_name}</option>)}</select></label>}
+   {properties.length>1&&<label htmlFor="tenant-pay-property">{t('Approved property','Hartanah diluluskan')}<select id="tenant-pay-property" value={propertyId} onChange={e=>{setPropertyId(e.target.value);setMethod(null);setQrOpen(false);setNotice('')}}><option value="">{t('Choose approved property','Pilih hartanah diluluskan')}</option>{properties.map(p=><option key={p.property_id} value={p.property_id}>{p.property_name}</option>)}</select></label>}
    {selected&&<>
     <h2>{selected.property_name}</h2>
-    <fieldset className="t2c-payment-methods"><legend>{t('Select payment method','Pilih kaedah bayaran')}</legend>
-     <label><input type="radio" name="method" checked={method==='qr'} onChange={()=>{setMethod('qr');setNotice('')}}/>{t('DuitNow QR','QR DuitNow')}</label>
-     <label><input type="radio" name="method" checked={method==='transfer'} onChange={()=>{setMethod('transfer');setNotice('')}}/>{t('Bank transfer','Pindahan bank')}</label>
-    </fieldset>
-    {!ready&&<p className="t2c-payment-warning">{t('This payment method has not been configured for your approved property. Contact the landlord; do not pay to an account shown for another property.','Kaedah bayaran ini belum disediakan untuk hartanah anda. Hubungi tuan rumah; jangan bayar ke akaun hartanah lain.')}</p>}
-    {ready&&<div className="t2c-payment-details">
-     <h2>{method==='qr'?t('Payment QR','QR Bayaran'):t('Bank transfer','Pindahan bank')}</h2>
-     {method==='qr'&&validQR&&<><div className="t2c-qr-frame"><img src={validQR} width="536" height="535" alt={t('Payment QR for','QR bayaran bagi')+' '+selected.property_name}/></div>
-      <a className="t2c-pay-save" href={validQR} download="Tenant2Care-Payment-QR.png">⬇ {t('Save QR to phone','Simpan QR ke telefon')}</a>
-      <p>{t('In your banking app, select Scan / DuitNow QR and choose the saved QR from your gallery if available. Otherwise, scan it from another device.','Dalam aplikasi bank, pilih Imbas / QR DuitNow dan gunakan QR yang disimpan dalam galeri jika disokong. Jika tidak, imbas QR pada peranti lain.')}</p></>}
+    <div className="t2c-pay-choices" role="group" aria-label={t('Select payment method','Pilih kaedah bayaran')}>
+     <button type="button" className={method==='qr'?'chosen':''} aria-pressed={method==='qr'} onClick={()=>{setMethod('qr');setQrOpen(true);setNotice('')}}><span aria-hidden="true">▦</span> {t('DuitNow QR','QR DuitNow')}</button>
+     <button type="button" className={method==='transfer'?'chosen':''} aria-pressed={method==='transfer'} onClick={()=>{setMethod('transfer');setQrOpen(false);setNotice('')}}><span aria-hidden="true">▤</span> {t('Bank Transfer','Pindahan Bank')}</button>
+    </div>
+    {method&&!ready&&<p className="t2c-payment-warning">{t('This payment method is not configured for your approved property. Contact your landlord.','Kaedah bayaran ini belum disediakan untuk hartanah yang diluluskan. Hubungi tuan rumah.')}</p>}
+    {method==='qr'&&ready&&<>
+     <button type="button" className="t2c-pay-save" onClick={()=>setQrOpen(true)}>{t('Show payment QR','Papar QR bayaran')}</button>
+     {qrOpen&&<div className="t2c-qr-overlay" role="presentation" onClick={()=>setQrOpen(false)}>
+      <div className="t2c-qr-dialog" role="dialog" aria-modal="true" aria-label={t('Payment QR','QR Bayaran')} onClick={e=>e.stopPropagation()}>
+       <div className="t2c-qr-dialog-head"><h2>{t('Scan payment QR','Imbas QR Bayaran')}</h2><button type="button" className="secondary" aria-label={t('Close QR','Tutup QR')} onClick={()=>setQrOpen(false)}>✕</button></div>
+       <p>{selected.property_name}</p>
+       <div className="t2c-qr-frame"><img src={validQR!} width="536" height="535" alt={t('Payment QR for','QR bayaran bagi')+' '+selected.property_name}/></div>
+       <a className="t2c-pay-save" href={validQR!} download="Tenant2Care-Payment-QR.png">⬇ {t('Save QR to phone','Simpan QR ke telefon')}</a>
+       <p className="muted">{t('Scan with your banking app, or save the QR and import it from your gallery if supported. Check recipient and amount before paying.','Imbas dengan aplikasi bank atau simpan QR dan pilih daripada galeri jika disokong. Semak penerima dan jumlah sebelum membayar.')}</p>
+      </div>
+     </div>}
+    </>}
+    {method==='transfer'&&ready&&<div className="t2c-payment-details">
+     <h2>{t('Bank transfer details','Maklumat pindahan bank')}</h2>
      <div className="t2c-pay-account">
-      <p><strong>{t('Approved property','Hartanah diluluskan')}:</strong> {selected.property_name}</p>
-      {selected.account_holder&&<p><strong>{t('Recipient','Penerima')}:</strong> {selected.account_holder}</p>}
-      {selected.bank_name&&<p><strong>{t('Receiving bank','Bank penerima')}:</strong> {selected.bank_name}</p>}
-      {account&&<><p><strong>{t('Account number','Nombor akaun')}:</strong> <span className="t2c-account-number">{account}</span></p>
-       <button className="secondary" type="button" onClick={()=>void copy(account)}>⧉ {t('Copy account number','Salin nombor akaun')}</button></>}
+      <p><strong>{t('Property','Hartanah')}:</strong> {selected.property_name}</p>
+      <p><strong>{t('Recipient','Penerima')}:</strong> {selected.account_holder}</p>
+      <p><strong>{t('Receiving bank','Bank penerima')}:</strong> {selected.bank_name}</p>
+      <p><strong>{t('Account number','Nombor akaun')}:</strong> <span className="t2c-account-number">{account}</span></p>
+      <button className="secondary" type="button" onClick={()=>void copy(account)}>⧉ {t('Copy account number','Salin nombor akaun')}</button>
+      {notice&&<p role="status" className="success">{notice}</p>}
      </div>
-     {notice&&<p role="status">{notice}</p>}
-     <p className="t2c-payment-warning">{t('Verify the recipient and amount in your bank before paying. Saving the QR does not confirm payment. Keep your bank receipt; payment is recorded only after landlord verification.','Semak penerima dan jumlah dalam aplikasi bank sebelum membayar. Menyimpan QR tidak mengesahkan bayaran. Simpan resit bank; bayaran hanya direkodkan selepas pengesahan tuan rumah.')}</p>
     </div>}
+    {method&&ready&&<p className="t2c-payment-warning">{t('Complete payment in your banking app. Upload your transaction receipt below and wait for landlord confirmation.','Selesaikan bayaran dalam aplikasi bank. Muat naik resit transaksi di bawah dan tunggu pengesahan tuan rumah.')}</p>}
    </>}
   </section>
   <TenantReceiptUpload/>
