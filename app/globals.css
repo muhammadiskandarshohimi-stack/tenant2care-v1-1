@@ -950,3 +950,61 @@ button.t2c-tenant-action:hover{
  .t2c-tenant-dashboard .t2c-dash-metrics{grid-template-columns:1fr}
  .t2c-tenant-dashboard .t2c-dash-metrics>div:last-child{grid-column:auto}
 }
+
+/* Property-linked utility bills — landlord upload and tenant read-only view */
+.t2c-utility-landlord-layout{
+ display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);
+ gap:18px;align-items:start;margin-top:20px;
+}
+.t2c-utility-panel{min-width:0;background:var(--tc-panel)!important;color:var(--tc-text)!important;border-color:var(--tc-border)!important}
+.t2c-utility-panel>h2{margin-top:0!important}
+.t2c-utility-form{display:flex;flex-direction:column;gap:5px}
+.t2c-utility-form label{display:block;color:var(--tc-text)!important;margin-top:8px;font-size:13px;font-weight:700}
+.t2c-utility-form input,.t2c-utility-form select,.t2c-utility-form textarea{
+ width:100%;min-width:0;min-height:43px;padding:11px 12px;margin:0 0 7px!important;
+ border:1px solid var(--tc-border);border-radius:10px;
+ background:var(--tc-soft)!important;color:var(--tc-text)!important;
+ font-size:14px;box-sizing:border-box;
+}
+.t2c-utility-form input[type=file]{min-height:49px;padding:10px}
+.t2c-utility-form button[type=submit]{
+ min-height:46px;margin-top:12px;font-weight:750;border-radius:11px;
+}
+.t2c-utility-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.t2c-utility-header h2{margin:0!important;font-size:18px}
+.t2c-utility-header button{min-height:42px;white-space:nowrap}
+.t2c-utility-list{display:grid;gap:12px}
+.t2c-utility-item{
+ background:var(--tc-soft)!important;border:1px solid var(--tc-border)!important;
+ border-radius:14px;padding:16px;min-width:0;overflow-wrap:anywhere;
+}
+.t2c-utility-item-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px 14px}
+.t2c-utility-item-head strong{font-size:14px;line-height:1.5;color:var(--tc-text)!important}
+.t2c-utility-item-head>span{font-weight:800;font-size:16px;color:var(--tc-accent-strong)!important;white-space:nowrap}
+.t2c-utility-item p{font-size:12px;line-height:1.55;margin:8px 0;color:var(--tc-muted)!important}
+.t2c-utility-item .t2c-utility-property{color:var(--tc-text)!important;font-weight:650}
+.t2c-utility-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.t2c-utility-actions button{min-height:42px;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700}
+.t2c-utility-tenant .t2c-utility-list{margin-top:13px}
+.t2c-utility-view-all{
+ display:inline-flex;align-items:center;min-height:44px;
+ color:var(--tc-accent-strong)!important;font-size:13px;font-weight:750;
+ text-decoration:none!important;margin-top:13px;
+}
+.t2c-utility-view-all:hover{text-decoration:underline!important}
+.t2c-utility-footnote{font-size:11px;line-height:1.55;color:var(--tc-muted)!important;margin:14px 0 0}
+.t2c-tenant-utility-page{max-width:940px;margin:0 auto;padding:110px 20px 60px}
+.t2c-tenant-utility-head{margin-bottom:18px;max-width:780px}
+.t2c-tenant-utility-head h1{font-size:clamp(25px,3.2vw,34px);margin:0 0 10px;color:var(--tc-text)!important}
+.t2c-tenant-utility-head p{line-height:1.6}
+.t2c-utility-filter{display:block;max-width:380px;font-size:13px;font-weight:700;margin:10px 0 16px;color:var(--tc-text)!important}
+.t2c-utility-filter select{width:100%;display:block;margin-top:6px}
+@media(max-width:840px){
+ .t2c-utility-landlord-layout{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:640px){
+ .t2c-tenant-utility-page{padding:112px 12px 50px}
+ .t2c-utility-panel{padding:16px}
+ .t2c-utility-item{padding:13px}
+ .t2c-utility-item-head>span{font-size:15px}
+}

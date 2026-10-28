@@ -3,6 +3,7 @@ import {useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import {createBrowserClient} from '@supabase/ssr';
 import {useLanguage,tr} from './LanguageSwitcher';
+import TenantUtilities from './TenantUtilities';
 
 type Application={id:string;full_name:string;status:string;requested_term_months:number;room_name:string;property_name:string;created_at:string};
 type Tenancy={id:string;status:string;start_date:string;end_date:string;term_months:number;monthly_rent:number;deposit_amount:number;room_name:string;property_name:string};
@@ -16,12 +17,13 @@ const localDate=(value:string)=>/^\d{4}-\d{2}-\d{2}$/.test(value)
  ?new Date(value+'T00:00:00Z').toLocaleDateString('en-MY',{timeZone:'UTC',day:'numeric',month:'short',year:'numeric'})
  :value;
 
-type IconName='dashboard'|'apply'|'payment'|'maintenance'|'signout'|'refresh'|'receipt'|'file'|'home'|'wallet';
+type IconName='dashboard'|'apply'|'payment'|'utilities'|'maintenance'|'signout'|'refresh'|'receipt'|'file'|'home'|'wallet';
 function ActionIcon({name}:{name:IconName}){
  const paths={
   dashboard:<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
   apply:<><path d="M8 3h8l5 5v13H8zM16 3v5h5M11 13h7M11 17h7M3 12v9M1 19h5"/></>,
   payment:<><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h5"/></>,
+  utilities:<><path d="M12 2c-3.5 5-6.5 8.6-6.5 12.3a6.5 6.5 0 0 0 13 0C18.5 10.6 15.5 7 12 2z"/><path d="M9 16c.5 1.3 1.5 2 3 2"/></>,
   maintenance:<><path d="M14 7a5 5 0 0 0-6 6L3 18l3 3 5-5a5 5 0 0 0 6-6l-3 3-3-3z"/></>,
   signout:<><path d="M9 4H4v16h5M13 8l4 4-4 4M8 12h9"/></>,
   refresh:<><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 9a7 7 0 0 1 12-2l2 5M4 12l2 5a7 7 0 0 0 12-2"/></>,
@@ -74,6 +76,7 @@ export default function TenantDashboard(){
      <Link className="t2c-tenant-action is-current" href="/tenant/dashboard" aria-current="page"><ActionIcon name="dashboard"/><span>{t('Dashboard','Papan Pemuka')}</span></Link>
      <Link className="t2c-tenant-action" href="/tenant/apply"><ActionIcon name="apply"/><span>{t('Apply for a room','Mohon bilik')}</span></Link>
      <Link className="t2c-tenant-action" href="/tenant/payments"><ActionIcon name="payment"/><span>{t('Pay rent','Bayar sewa')}</span></Link>
+     <Link className="t2c-tenant-action" href="/tenant/utilities"><ActionIcon name="utilities"/><span>{t('Utility Bills','Bil Utiliti')}</span></Link>
      <Link className="t2c-tenant-action" href="/tenant/maintenance"><ActionIcon name="maintenance"/><span>{t('Maintenance','Penyelenggaraan')}</span></Link>
     </nav>
     <button type="button" className="t2c-dash-refresh" disabled={busy} onClick={()=>void load()}>
@@ -130,6 +133,8 @@ export default function TenantDashboard(){
        })}</div>}
       <p className="t2c-dash-footnote">{t('Draft rent is not due. Balances exclude late fees, utilities and daily proration.','Sewa draf belum perlu dibayar. Baki tidak termasuk caj lewat, utiliti dan prorata harian.')}</p>
      </section>
+
+     <TenantUtilities compact/>
 
      <section className="t2c-dash-section" aria-labelledby="t2c-payments-title">
       <div className="t2c-dash-section-head">
