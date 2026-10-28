@@ -451,3 +451,14 @@ input:focus {
   outline: 2px solid #b51677;
   outline-offset: 2px;
 }
+
+/* Tenant2Care language control and architectural doodle theme */
+body{background-color:#fff6fb;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22420%22%20height%3D%22330%22%20viewBox%3D%220%200%20420%20330%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23d67fae%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.55%22%3E%3Cpath%20d%3D%22M18%2096%2083%2043%20147%2096v95H18zM18%2096l65-47%2064%2047M35%20112h30v30H35zm57%200h34v30H92zM72%20191v-37h28v37M34%20160h24M109%20160h24M21%20195h128%22%2F%3E%3Cpath%20d%3D%22M220%2035h120v200H220zM211%2035h138M220%2063h120M237%2078h23v25h-23zm43%200h23v25h-23zm-43%2046h23v25h-23zm43%200h23v25h-23zm-43%2046h23v25h-23zm43%200h23v25h-23zM272%20235v-45h23v45M214%20237h133%22%2F%3E%3Cpath%20d%3D%22m53%20268%2013-14%2013%2014m-13-14v30M127%20288l12-12%2012%2012m-12-12v20M355%20271h37m-19-19v38M160%2034h16m-8-8v16M35%20220h16m-8-8v16%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-size:420px 330px;background-repeat:repeat;background-attachment:fixed}
+.t2c-global-language{position:fixed;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));z-index:1000}
+.t2c-language{display:inline-flex;gap:3px;align-items:center;padding:5px;background:#fff;border:1px solid #e9bed6;border-radius:999px;box-shadow:0 5px 18px #8d14572b}
+.t2c-language-label{font-size:15px;padding:0 5px 0 8px}
+.t2c-language button{width:41px;min-height:38px;border:0;border-radius:999px;background:transparent;color:#8c205d;font-size:13px;font-weight:800;cursor:pointer}
+.t2c-language button.selected{background:#b51677;color:#fff}
+.t2c-language button:focus-visible{outline:3px solid #8127a8;outline-offset:2px}
+.topbar{padding-right:145px}
+@media(max-width:600px){.t2c-global-language{top:calc(7px + env(safe-area-inset-top));right:9px}.t2c-language{padding:3px}.t2c-language button{width:35px;min-height:35px}.topbar{padding-right:126px}.topbar span{display:none}}

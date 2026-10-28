@@ -5,9 +5,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import {useLanguage,tr} from '@/components/LanguageSwitcher';
 
 export default function TenantLogin() {
   const router = useRouter();
+  const lang=useLanguage();const t=(en:string,my:string)=>tr(lang,en,my);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [register, setRegister] = useState(false);
@@ -80,12 +82,12 @@ export default function TenantLogin() {
         border: '1px solid #f1d4e3'
       }}>
         <h1 style={{ color: '#b51677' }}>Tenant2Care</h1>
-        <p>Tenant Portal</p>
-        <Link href="/login" className="btn secondary full" style={{display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>← Landlord Login</Link>
-        <h2>{register ? 'Create Account' : 'Tenant Login'}</h2>
+        <p>{t('Tenant Portal','Portal Penyewa')}</p>
+        <Link href="/login" className="btn secondary full" style={{display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>← {t('Landlord Login','Log Masuk Tuan Rumah')}</Link>
+        <h2>{register ? t('Create Account','Daftar Akaun') : t('Tenant Login','Log Masuk Penyewa')}</h2>
 
         <form onSubmit={submit}>
-          <label>Email Address</label>
+          <label>{t('Email Address','Alamat E-mel')}</label>
           <input
             type="email"
             required
@@ -94,7 +96,7 @@ export default function TenantLogin() {
             onChange={e => setEmail(e.target.value)}
           />
 
-          <label>Password</label>
+          <label>{t('Password','Kata Laluan')}</label>
           <input
             type="password"
             required
@@ -105,11 +107,11 @@ export default function TenantLogin() {
           />
 
           <button className="btn full" disabled={busy}>
-            {busy ? 'Please wait...' : register ? 'Register' : 'Sign In'}
+            {busy ? t('Please wait...','Sila tunggu...') : register ? t('Register','Daftar') : t('Sign In','Log Masuk')}
           </button>
         </form>
 
-        {!register && <p><Link href="/forgot-password">Forgot password?</Link></p>}
+        {!register && <p><Link href="/forgot-password">{t('Forgot password?','Lupa kata laluan?')}</Link></p>}
         {message && <p role="status">{message}</p>}
 
         <button
@@ -127,8 +129,8 @@ export default function TenantLogin() {
           }}
         >
           {register
-            ? 'Already registered? Sign in'
-            : 'New tenant? Create account'}
+            ? t('Already registered? Sign in','Sudah berdaftar? Log masuk')
+            : t('New tenant? Create account','Penyewa baharu? Daftar akaun')}
         </button>
       </section>
     </main>
