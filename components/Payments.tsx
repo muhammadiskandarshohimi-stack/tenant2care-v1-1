@@ -47,6 +47,21 @@ export default function Payments(){
   }catch(e){setError(e&&typeof e==='object'&&'message'in e?String(e.message):'Unable to record payment. Retry with the same details to avoid duplication.')}
   finally{setBusy(false)}
  }
+ async function deletePayment(payment:Payment){
+  if(busy)return;
+  const relatedReceipt=receipts.find(r=>r.payment_id===payment.id);
+  const detail=`${money(payment.amount)} (${payment.payment_type})${relatedReceipt?' and receipt '+relatedReceipt.receipt_number:''}`;
+  if(!window.confirm(`Permanently delete payment ${detail}? The associated receipt will also be deleted. This cannot be undone, and rental/deposit balances will be recalculated.`))return;
+  setBusy(true);setError('');setMessage('');
+  try{
+   const {data:result,error:failure}=await db.rpc('landlord_delete_payment_permanently',{p_payment_id:payment.id});
+   if(failure)throw failure;
+   if(!result?.deleted)throw Error('The database did not confirm deletion.');
+   await load();
+   setMessage(`Payment deleted permanently, including ${result.receipts_deleted} linked receipt(s). Outstanding balances have been refreshed.`);
+  }catch(e){setError(e instanceof Error?e.message:'Unable to delete payment.');}
+  finally{setBusy(false)}
+ }
  return <Shell><div className="page-title"><div><p className="eyebrow">PAYMENTS</p><h1>Rent, deposits and receipts</h1><p className="muted">Record money already received by cash or bank transfer.</p></div><button className="secondary" disabled={busy} onClick={()=>void load()}>Refresh</button></div>
  <div className="columns"><section className="panel"><h2>Record received payment</h2><form className="entry-form" onSubmit={submit}>
  <label>Tenancy<select required disabled={busy} value={tenancy} onChange={e=>setTenancy(e.target.value)}><option value="">Select tenancy</option>{tenancies.filter(t=>t.status!=='cancelled').map(t=><option key={t.id} value={t.id}>{label(t)} ({t.status})</option>)}</select></label>
@@ -60,6 +75,6 @@ export default function Payments(){
  <section className="panel"><h2>Balances as of {malaysiaDate()} (Malaysia)</h2><p className="muted">Rent is due at the start of each tenancy month, capped at the agreed term, for active/ended tenancies. No daily proration, late fees or utility charges are included. Draft rent is not yet due; advance rent appears as credit. Deposit is tracked separately.</p>
  {balances.map(b=>{const t=tenancies.find(t=>t.id===b.tenancy_id);return <article className="record" key={b.tenancy_id}><div><strong>{t?label(t):'Tenancy'} ({t?.status})</strong><p>Rent due to date: {money(b.rent_due)} · Rent received: {money(b.rent_paid)}</p><p>Outstanding rent: <strong>{money(b.rent_balance)}</strong> · Rent credit: {money(b.rent_credit)}</p><p>Deposit agreed: {money(b.deposit_agreed)} · Received: {money(b.deposit_paid)}</p><p>Deposit remaining: <strong>{money(b.deposit_remaining)}</strong>{Number(b.deposit_excess)>0?' · Excess deposit: '+money(b.deposit_excess):''}</p></div></article>})}
  {!busy&&balances.length===0&&<p>No tenancy balances yet.</p>}</section></div>
- <section className="panel" style={{marginTop:20}}><h2>Payment history ({payments.length})</h2>{payments.map(p=>{const t=tenancies.find(t=>t.id===p.tenancy_id),r=receipts.find(r=>r.payment_id===p.id);return <article className="record" key={p.id}><div><strong>{money(p.amount)} — {p.payment_type} ({p.status})</strong><p>{t?label(t):'Tenancy'} · {p.paid_at?new Date(p.paid_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'}):'Date not recorded'}</p><p>Reference: {p.reference||'—'}</p>{p.status==='paid'&&r&&<Link className="btn" href={'/payments/'+p.id+'/receipt'}>Open receipt {r.receipt_number}</Link>}</div></article>})}{!busy&&payments.length===0&&<p>No payments recorded.</p>}</section>
+ <section className="panel" style={{marginTop:20}}><h2>Payment history ({payments.length})</h2>{payments.map(p=>{const t=tenancies.find(t=>t.id===p.tenancy_id),r=receipts.find(r=>r.payment_id===p.id);return <article className="record" key={p.id}><div><strong>{money(p.amount)} — {p.payment_type} ({p.status})</strong><p>{t?label(t):'Tenancy'} · {p.paid_at?new Date(p.paid_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'}):'Date not recorded'}</p><p>Reference: {p.reference||'—'}</p>{p.status==='paid'&&r&&<Link className="btn" href={'/payments/'+p.id+'/receipt'}>Open receipt {r.receipt_number}</Link>}<button type="button" className="danger" disabled={busy} onClick={()=>void deletePayment(p)} style={{display:"inline-flex",gap:8,alignItems:"center",marginTop:10}}><span aria-hidden="true">🗑</span> Delete payment</button></div></article>})}{!busy&&payments.length===0&&<p>No payments recorded.</p>}</section>
  </Shell>
 }
