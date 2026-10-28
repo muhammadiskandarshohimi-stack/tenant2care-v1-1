@@ -484,7 +484,7 @@ body{background-color:#fff6fb;background-image:url("data:image/svg+xml,%3Csvg%20
   --tc-on-accent:#FFFFFF;
   --tc-border:#D9E3E8;
   --tc-shadow:0 5px 22px #21394b12;
-  --tc-doodle-opacity:.08;
+  --tc-doodle-opacity:.25;
   --tc-error:#AD2747;
   --tc-success:#157249;
 }
@@ -502,7 +502,7 @@ body{background-color:#fff6fb;background-image:url("data:image/svg+xml,%3Csvg%20
     --tc-on-accent:#102821;
     --tc-border:#435160;
     --tc-shadow:0 5px 24px #0005;
-    --tc-doodle-opacity:.035;
+    --tc-doodle-opacity:.17;
     --tc-error:#FFB0C1;
     --tc-success:#93EBC8;
   }
@@ -585,3 +585,15 @@ a:not(.btn):not(.t2c-quick a):not(.t2c-back-dashboard){text-decoration-color:var
   [style*="background: white;"]{background:var(--tc-panel)!important}
   [style*="color: rgb(67, 19, 49)"],[style*="color: #431331"]{color:var(--tc-text)!important}
 }
+
+/* Navigation: sign out belongs at the bottom, not beside the page title. */
+.sidebar{display:flex;flex-direction:column;min-height:calc(100dvh - 40px)}
+.sidebar nav{flex:1 1 auto}
+.sidebar .t2c-desktop-logout{margin-top:auto}
+.t2c-mobile-logout{display:none}
+.t2c-bottom-logout{display:flex;justify-content:center;align-items:center;gap:9px;min-height:46px;width:100%;max-width:400px;margin:0 auto;font-weight:750;border:1px solid var(--tc-border);border-radius:13px;cursor:pointer}
+.t2c-bottom-logout svg{width:18px;height:18px;flex-shrink:0}
+.t2c-tenant-footer{margin-top:32px;padding:16px 0 calc(22px + env(safe-area-inset-bottom));border-top:1px solid var(--tc-border)}
+@media(max-width:900px){.sidebar{min-height:0;display:block}.sidebar .t2c-desktop-logout{display:none}.t2c-mobile-logout{display:block;margin-top:18px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}}
+/* Increase illustration definition without competing with content text. */
+body::before{background-size:380px 300px;opacity:var(--tc-doodle-opacity)}
