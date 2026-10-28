@@ -670,3 +670,11 @@ button.t2c-tenant-action:hover{
 .t2c-account-number{font-size:clamp(19px,4vw,25px);font-weight:800;letter-spacing:1px}
 .t2c-payment-warning{background:var(--tc-soft);padding:15px;border-left:4px solid var(--tc-accent);border-radius:6px;line-height:1.6;color:var(--tc-text)!important}
 @media(max-width:600px){.t2c-pay-head{padding-right:0;padding-top:95px}.t2c-payment-card{padding:16px}.t2c-payment-methods{flex-direction:column;gap:4px}}
+
+/* Tenant menu: one clean vertical stack at left on all screen sizes. */
+.t2c-tenant-layout{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);gap:20px;align-items:start;margin-top:20px}
+.t2c-tenant-sidebar{min-width:0;position:sticky;top:14px}
+.t2c-tenant-sidebar .t2c-tenant-actions{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;width:100%;gap:10px!important;margin:0 0 10px!important}
+.t2c-tenant-sidebar .t2c-tenant-action{display:flex!important;justify-content:flex-start!important;text-align:left!important;flex:unset!important;width:100%!important;min-width:0!important;font-size:14px!important;white-space:normal}
+.t2c-tenant-content{min-width:0}
+@media(max-width:700px){.t2c-tenant-layout{grid-template-columns:minmax(0,1fr);gap:12px}.t2c-tenant-sidebar{position:static}.t2c-tenant-sidebar .t2c-tenant-actions{gap:8px!important}.t2c-tenant-sidebar .t2c-tenant-action{min-height:48px!important}}
