@@ -58,6 +58,21 @@ export default function Tenancies(){
   }catch(e){setError(e&&typeof e==='object'&&'message'in e?String(e.message):'Unable to create tenancy.')}
   finally{setBusy(false)}
  }
+ async function deleteTenancy(t:Tenancy){
+  if(busy)return;
+  const tenantName=apps.find(a=>a.id===t.application_id)?.full_name||'this tenant';
+  if(!window.confirm(`Delete ${t.status} tenancy for ${tenantName}? This is permanent. Linked payments, receipts and agreements will not be deleted; if they exist, the database may block deletion.`))return;
+  setBusy(true);setError('');setMessage('');
+  try{
+   const {data:{user},error:authError}=await db.auth.getUser();if(authError||!user)throw Error('Please sign in again.');
+   const {data:deleted,error:failure}=await db.from('tenancies').delete().eq('id',t.id).eq('owner_id',user.id).select('id');
+   if(failure)throw failure;
+   if(!deleted?.length)throw Error('Deletion was not permitted. Check database permissions and linked records.');
+   setMessage('Tenancy deleted. The application and room remain unchanged.');
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:'Unable to delete tenancy.');}
+  finally{setBusy(false)}
+ }
  return <Shell><div className="page-title"><div><p className="eyebrow">TENANCIES</p><h1>Tenancy management</h1><p className="muted">Create a draft from an approved application.</p></div></div>
  <div className="columns"><section className="panel"><h2>Create draft tenancy</h2>
  <form className="entry-form" onSubmit={submit}>
@@ -72,7 +87,7 @@ export default function Tenancies(){
  <button disabled={busy||!eligible.some(a=>a.id===application)} type="submit">{busy?'Please wait...':'Create draft tenancy'}</button>
  </form>{error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status" className="success">{message}</p>}
  </section><section className="panel"><div className="panel-heading"><h2>Tenancies ({rows.length})</h2><button className="secondary" disabled={busy} onClick={()=>void load()}>Refresh</button></div>
- {rows.map(t=><article className="record" key={t.id}><div><strong>{apps.find(a=>a.id===t.application_id)?.full_name||'Tenant'} — {rooms.find(r=>r.id===t.room_id)?.name||'Room'}</strong><p>{t.start_date} to {t.end_date} · {t.term_months} months</p><p>{money(t.monthly_rent)}/month · Deposit agreed {money(t.deposit_amount)}</p><p>Status: <strong>{t.status}</strong></p><TenancyActions id={t.id} status={t.status} startDate={t.start_date} onChanged={load}/></div></article>)}
+ {rows.map(t=><article className="record" key={t.id}><div><strong>{apps.find(a=>a.id===t.application_id)?.full_name||'Tenant'} — {rooms.find(r=>r.id===t.room_id)?.name||'Room'}</strong><p>{t.start_date} to {t.end_date} · {t.term_months} months</p><p>{money(t.monthly_rent)}/month · Deposit agreed {money(t.deposit_amount)}</p><p>Status: <strong>{t.status}</strong></p><TenancyActions id={t.id} status={t.status} startDate={t.start_date} onChanged={load}/><button type="button" className="danger" disabled={busy} onClick={()=>void deleteTenancy(t)} style={{marginTop:12,display:"inline-flex",alignItems:"center",gap:8}}><span aria-hidden="true">🗑</span> Delete tenancy</button></div></article>)}
  {!busy&&rows.length===0&&<p>No tenancies yet.</p>}
  </section></div></Shell>;
 }
