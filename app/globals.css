@@ -468,3 +468,9 @@ body{background-color:#fff6fb;background-image:url("data:image/svg+xml,%3Csvg%20
 .t2c-back-dashboard:hover{background:#fff0f7}
 .t2c-back-dashboard:focus-visible{outline:3px solid #8127a8;outline-offset:2px}
 @media(max-width:600px){.t2c-back-dashboard{top:calc(57px + env(safe-area-inset-top));right:9px;padding:8px 11px;font-size:12px;min-height:40px}}
+
+/* Enforce Tenant2Care's light magenta design on Android/iOS browsers. */
+:root{color-scheme:only light!important}
+html{color-scheme:only light!important;background-color:#fff6fb}
+body{color-scheme:only light!important}
+input,select,textarea,button{color-scheme:light}
