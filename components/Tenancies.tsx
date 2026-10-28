@@ -61,14 +61,14 @@ export default function Tenancies(){
  async function deleteTenancy(t:Tenancy){
   if(busy)return;
   const tenantName=apps.find(a=>a.id===t.application_id)?.full_name||'this tenant';
-  if(!window.confirm(`Delete ${t.status} tenancy for ${tenantName}? This is permanent. Linked payments, receipts and agreements will not be deleted; if they exist, the database may block deletion.`))return;
+  if(!window.confirm(`PERMANENTLY DELETE the ${t.status} tenancy for ${tenantName}? All linked payments, receipts and agreements will also be permanently deleted. This cannot be undone.`))return;
   setBusy(true);setError('');setMessage('');
   try{
    const {data:{user},error:authError}=await db.auth.getUser();if(authError||!user)throw Error('Please sign in again.');
-   const {data:deleted,error:failure}=await db.from('tenancies').delete().eq('id',t.id).eq('owner_id',user.id).select('id');
+   const {data:result,error:failure}=await db.rpc('landlord_delete_tenancy_permanently',{p_tenancy_id:t.id});
    if(failure)throw failure;
-   if(!deleted?.length)throw Error('Deletion was not permitted. Check database permissions and linked records.');
-   setMessage('Tenancy deleted. The application and room remain unchanged.');
+   if(!result?.deleted)throw Error('Deletion was not confirmed by the database.');
+   setMessage(`Tenancy permanently deleted, including ${result.payments_deleted} payment(s) and ${result.agreements_deleted} agreement(s). Application and room are unchanged.`);
    await load();
   }catch(e){setError(e instanceof Error?e.message:'Unable to delete tenancy.');}
   finally{setBusy(false)}
