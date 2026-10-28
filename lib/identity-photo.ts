@@ -43,14 +43,11 @@ export async function stampIdentityCard(input:Buffer){
  const w=info.width,h=info.height;
  const lettersWidth=WATERMARK.length*6-1;
  const scaleX=w*.82/lettersWidth,scaleY=Math.max(3.8,Math.min(w*.008,h*.014));
- const bandHeight=scaleY*10;
- const lineWidth=w*.9;
+ // Transparent diagonal lettering: no opaque strip or border lines over IC details.
  const overlay=Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
  <g transform="translate(${w/2} ${h/2}) rotate(-20)">
-  <rect x="${-lineWidth/2}" y="${-bandHeight/2}" width="${lineWidth}" height="${bandHeight}" rx="${scaleY*1.2}" fill="white" fill-opacity=".78"/>
-  <path d="M ${-lineWidth/2} ${-bandHeight/2} H ${lineWidth/2} M ${-lineWidth/2} ${bandHeight/2} H ${lineWidth/2}" stroke="#a11932" stroke-width="${Math.max(2,w/500)}" stroke-opacity=".95"/>
   <g transform="translate(${-lettersWidth*scaleX/2} ${-3.5*scaleY}) scale(${scaleX} ${scaleY})">
-   <path d="${WATERMARK_PATH}" fill="#88102d"/>
+   <path d="${WATERMARK_PATH}" fill="#a11932" fill-opacity=".46"/>
   </g>
  </g></svg>`);
  // Re-encoding strips GPS and other EXIF metadata.
