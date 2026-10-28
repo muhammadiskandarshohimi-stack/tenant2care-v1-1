@@ -652,3 +652,21 @@ button.t2c-tenant-action:hover{
   .t2c-tenant-actions{gap:10px!important}
   .t2c-tenant-actions .t2c-tenant-action{flex:1 1 145px;min-width:0;text-align:center}
 }
+
+/* Tenant payment QR page */
+.t2c-pay-page{max-width:820px;margin:0 auto;padding:24px 18px 70px;color:var(--tc-text)}
+.t2c-pay-head{padding-right:140px}
+.t2c-payment-card{margin:20px 0}
+.t2c-payment-methods{display:flex;gap:16px;flex-wrap:wrap;border:1px solid var(--tc-border);border-radius:12px;padding:14px;margin:10px 0 24px}
+.t2c-payment-methods legend{font-weight:700;padding:0 7px}
+.t2c-payment-methods label{display:inline-flex;align-items:center;gap:8px;min-height:40px;color:var(--tc-text)!important}
+.t2c-payment-methods input{width:18px!important;height:18px!important;margin:0!important;accent-color:var(--tc-accent)}
+.t2c-payment-details{margin-top:20px}
+.t2c-qr-frame{width:min(100%,380px);margin:14px auto;background:#fff;border:10px solid #fff;border-radius:14px}
+.t2c-qr-frame img{display:block;width:100%;height:auto;image-rendering:auto}
+.t2c-pay-save{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:12px 16px;margin:8px 0;background:var(--tc-accent-strong)!important;color:var(--tc-on-accent)!important;border-radius:12px;text-decoration:none!important;font-weight:700}
+.t2c-pay-account{background:var(--tc-soft);border:1px solid var(--tc-border);border-radius:14px;padding:18px;margin:20px 0}
+.t2c-pay-account p{color:var(--tc-text)!important;overflow-wrap:anywhere}
+.t2c-account-number{font-size:clamp(19px,4vw,25px);font-weight:800;letter-spacing:1px}
+.t2c-payment-warning{background:var(--tc-soft);padding:15px;border-left:4px solid var(--tc-accent);border-radius:6px;line-height:1.6;color:var(--tc-text)!important}
+@media(max-width:600px){.t2c-pay-head{padding-right:0;padding-top:95px}.t2c-payment-card{padding:16px}.t2c-payment-methods{flex-direction:column;gap:4px}}
