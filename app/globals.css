@@ -469,8 +469,85 @@ body{background-color:#fff6fb;background-image:url("data:image/svg+xml,%3Csvg%20
 .t2c-back-dashboard:focus-visible{outline:3px solid #8127a8;outline-offset:2px}
 @media(max-width:600px){.t2c-back-dashboard{top:calc(57px + env(safe-area-inset-top));right:9px;padding:8px 11px;font-size:12px;min-height:40px}}
 
-/* Enforce Tenant2Care's light magenta design on Android/iOS browsers. */
-:root{color-scheme:only light!important}
-html{color-scheme:only light!important;background-color:#fff6fb}
-body{color-scheme:only light!important}
-input,select,textarea,button{color-scheme:light}
+
+/* Automatic device theme, preserving Tenant2Care magenta identity. */
+:root {
+  color-scheme: light;
+  --t2c-page:#fff6fb;
+  --t2c-panel:#ffffff;
+  --t2c-soft:#fff8fc;
+  --t2c-ink:#431331;
+  --t2c-muted:#866579;
+  --t2c-accent:#b51677;
+  --t2c-border:#f1d4e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --t2c-page:#140d16;
+    --t2c-panel:#261b2a;
+    --t2c-soft:#302235;
+    --t2c-ink:#fff0f8;
+    --t2c-muted:#d8bed0;
+    --t2c-accent:#ff77c8;
+    --t2c-border:#70465e;
+  }
+  html,body {background-color:var(--t2c-page)!important;color:var(--t2c-ink)!important}
+  body {background-blend-mode:screen;background-attachment:fixed}
+  .shell,.main-area,.content {color:var(--t2c-ink)}
+  .sidebar,.topbar,.panel,.card,.t2c-stat,.p3-card,.t2c-language,.t2c-back-dashboard,
+  .login-panel,.nav a,.mobile-nav {
+    background:var(--t2c-panel)!important;
+    color:var(--t2c-ink)!important;
+    border-color:var(--t2c-border)!important;
+    box-shadow:0 5px 22px #0005;
+  }
+  .record,.t2c-property,.pill,.login-panel>section,.t2c-property-grid>* {
+    background:var(--t2c-soft)!important;
+    color:var(--t2c-ink)!important;
+    border-color:var(--t2c-border)!important;
+  }
+  .p3-wrap,main[style*="background"],.login-screen {
+    background-color:var(--t2c-page)!important;
+    color:var(--t2c-ink)!important;
+  }
+  main[style*="background"]>section {
+    background:var(--t2c-panel)!important;
+    color:var(--t2c-ink)!important;
+    border-color:var(--t2c-border)!important;
+  }
+  h1,h2,h3,h4,h5,h6,.page-title h1,.sidebar .brand,.topbar strong,.p3-card h1,.t2c-stat strong,.number {
+    color:var(--t2c-ink)!important;
+  }
+  .eyebrow,.t2c-stat strong,.number,.sidebar .brand,.topbar strong,.p3-card h1 {color:var(--t2c-accent)!important}
+  p,label,small,.record p,.muted,.t2c-property p,.t2c-stat span,.t2c-stat small,
+  .topbar span,.p3-note,.empty,.record .muted {color:var(--t2c-muted)!important}
+  .record strong,.panel strong,.t2c-stat,.t2c-property strong {color:var(--t2c-ink)}
+  input,textarea,select,.input,.entry-form input,.entry-form select,.p3-card input,.p3-card select,
+  input[type="email"],input[type="password"] {
+    color-scheme:dark;
+    background:var(--t2c-soft)!important;
+    color:var(--t2c-ink)!important;
+    border-color:var(--t2c-border)!important;
+  }
+  input::placeholder,textarea::placeholder {color:#c7a9be!important;opacity:1}
+  button,.btn,.t2c-quick a,.p3-card button,.form-actions button,.record-actions button,
+  .panel-heading button,.sidebar nav a.active,.mobile-nav a.active,.nav a.active {
+    background:#b51677!important;
+    color:#fff!important;
+    border-color:#cd489e!important;
+  }
+  button.secondary,.btn.secondary,.logout,button.danger,.t2c-language button,
+  .t2c-back-dashboard,.mobile-nav a:not(.active),.sidebar nav a:not(.active) {
+    background:var(--t2c-soft)!important;
+    color:var(--t2c-ink)!important;
+    border-color:var(--t2c-border)!important;
+  }
+  button.danger {color:#ffacbc!important;border-color:#a65b72!important}
+  .t2c-language button.selected,.t2c-back-dashboard:hover {background:#b51677!important;color:#fff!important}
+  .sidebar nav a,.mobile-nav a,.nav a {color:var(--t2c-ink);border-color:var(--t2c-border)}
+  .t2c-quick a,.t2c-stat a {color:inherit}
+  .error,.p3-error {color:#ff8fa8!important}
+  .success,.p3-success {color:#85e5b1!important}
+  :where(a,button,input,select,textarea):focus-visible {outline:3px solid #ff8ed3;outline-offset:2px}
+}
