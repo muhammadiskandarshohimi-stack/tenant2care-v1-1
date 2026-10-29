@@ -1079,3 +1079,18 @@ button.t2c-tenant-action:hover{
  .t2c-agreement-document .t2c-agreement-print-footer,
  .t2c-print-controls{display:none!important}
 }
+
+/* Landlord-only report removal action; retains linked finance expenses */
+.t2c-maintenance-delete-row{
+ display:flex;justify-content:flex-end;align-items:center;
+ gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--tc-border);
+}
+button.t2c-maintenance-delete-button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+ min-height:46px!important;padding:11px 15px!important;border:1.5px solid var(--tc-error)!important;
+ border-radius:11px!important;background:var(--tc-panel)!important;
+ color:var(--tc-error)!important;-webkit-text-fill-color:var(--tc-error)!important;
+ font-size:14px!important;font-weight:750!important;cursor:pointer;
+}
+button.t2c-maintenance-delete-button svg{flex-shrink:0;stroke:currentColor!important}
+button.t2c-maintenance-delete-button:disabled{opacity:.55!important;cursor:wait}

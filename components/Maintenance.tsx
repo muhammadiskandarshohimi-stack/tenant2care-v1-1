@@ -4,11 +4,13 @@ import Link from 'next/link';
 import {createBrowserClient} from '@supabase/ssr';
 import {Shell} from './Management';
 import MaintenanceEditor from './MaintenanceEditor';
+import {useLanguage,tr} from './LanguageSwitcher';
 type Room={room_id:string;room_name:string;property_name:string};
 type Report={id:string;room_id:string;room_name:string;title:string;description:string;priority:string;status:string;last_update:string|null;updated_at:string;created_at:string;reporter:string;repair_cost:number|null;cost_incurred_on:string|null;total_repair_cost:number|null};
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 const money=(n:number)=>new Intl.NumberFormat('en-MY',{style:'currency',currency:'MYR'}).format(Number(n||0));
 export default function Maintenance({landlord=true}:{landlord?:boolean}){
+ const lang=useLanguage();const translate=(en:string,my:string)=>tr(lang,en,my);
  const [rooms,setRooms]=useState<Room[]>([]),[reports,setReports]=useState<Report[]>([]),[room,setRoom]=useState(''),[title,setTitle]=useState(''),[description,setDescription]=useState(''),[priority,setPriority]=useState('normal'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const request=useRef<{signature:string;id:string}|null>(null);
  async function load(){
@@ -32,6 +34,24 @@ export default function Maintenance({landlord=true}:{landlord?:boolean}){
   }catch(e){setError(e&&typeof e==='object'&&'message'in e?String(e.message):'Unable to submit report. Retry with the same details.')}
   finally{setBusy(false)}
  }
+ async function removeReport(report:Report){
+  if(!landlord||busy)return;
+  const prompt=translate(
+   'Permanently delete this maintenance report?\\n\\n'+report.title+'\\n\\nLinked repair expenses will remain in your financial records. This cannot be undone.',
+   'Padam laporan penyelenggaraan ini secara kekal?\\n\\n'+report.title+'\\n\\nKos pembaikan berkaitan kekal dalam rekod kewangan. Tindakan ini tidak boleh dibatalkan.'
+  );
+  if(!window.confirm(prompt))return;
+  setBusy(true);setError('');setMessage('');
+  try{
+   const {data,error}=await db.rpc('landlord_delete_maintenance_report',{p_ticket_id:report.id});
+   if(error)throw error;
+   await load();
+   const count=Number(data||0);
+   setMessage(count>0?translate('Maintenance report deleted. '+count+' linked repair expense(s) retained in Finances.','Laporan dipadam. '+count+' rekod kos pembaikan dikekalkan dalam Kewangan.'):translate('Maintenance report deleted.','Laporan penyelenggaraan dipadam.'));
+  }catch(e){
+   setError(e instanceof Error?e.message:translate('Unable to delete maintenance report.','Tidak dapat memadam laporan penyelenggaraan.'));
+  }finally{setBusy(false)}
+ }
  const content=<><div className="page-title"><div><p className="eyebrow">MAINTENANCE</p><h1>{landlord?'Repairs and maintenance':'Report a room issue'}</h1><p className="muted">{landlord?'Manage reports, progress and repair costs.':'Submit an issue for your assigned room and follow its updates.'}</p></div><button className="secondary" disabled={busy} onClick={()=>void load()}>Refresh</button></div>
  {landlord&&<div className="t2c-stats"><div className="t2c-stat"><span>Open / in progress</span><strong>{reports.filter(t=>['open','in_progress'].includes(t.status)).length}</strong></div><div className="t2c-stat"><span>Resolved / closed</span><strong>{reports.filter(t=>['resolved','closed'].includes(t.status)).length}</strong></div><div className="t2c-stat"><span>Recorded repair costs</span><strong>{money(reports.reduce((sum,t)=>sum+Number(t.total_repair_cost||0),0))}</strong></div></div>}
  <div className="columns"><section className="panel"><h2>New maintenance report</h2>
@@ -45,7 +65,12 @@ export default function Maintenance({landlord=true}:{landlord?:boolean}){
  <button disabled={busy||!room}>{busy?'Please wait...':'Submit maintenance report'}</button>
  </form>{error&&<p className="error" role="alert">{error}</p>}{message&&<p className="success" role="status">{message}</p>}</section>
  <section className="panel"><h2>{landlord?'Reports':'My reports'} ({reports.length})</h2>
- {reports.map(t=><article className="record" key={t.id} style={{display:'block'}}><strong>{t.title}</strong><p>{t.room_name||'Room'} · {t.priority} · <strong>{t.status.replace('_',' ')}</strong></p><p style={{whiteSpace:'pre-wrap'}}>{t.description}</p><p className="muted">{new Date(t.created_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})} · {t.reporter} report</p>{t.last_update&&<p style={{whiteSpace:'pre-wrap'}}>Latest update: {t.last_update}</p>}{landlord&&<><p>Recorded repair cost: {money(Number(t.total_repair_cost||0))}</p><MaintenanceEditor key={t.id+':'+t.updated_at} ticket={t} onChanged={load} disabled={busy}/></>}</article>)}
+ {reports.map(t=><article className="record" key={t.id} style={{display:'block'}}><strong>{t.title}</strong><p>{t.room_name||'Room'} · {t.priority} · <strong>{t.status.replace('_',' ')}</strong></p><p style={{whiteSpace:'pre-wrap'}}>{t.description}</p><p className="muted">{new Date(t.created_at).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})} · {t.reporter} report</p>{t.last_update&&<p style={{whiteSpace:'pre-wrap'}}>Latest update: {t.last_update}</p>}{landlord&&<><p>Recorded repair cost: {money(Number(t.total_repair_cost||0))}</p><MaintenanceEditor key={t.id+':'+t.updated_at} ticket={t} onChanged={load} disabled={busy}/><div className="t2c-maintenance-delete-row">
+ <button className="t2c-maintenance-delete-button danger" type="button" disabled={busy} onClick={()=>void removeReport(t)}>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg>
+  {translate('Delete report','Padam laporan')}
+ </button>
+</div></>}</article>)}
  {!busy&&reports.length===0&&<p>No maintenance reports yet.</p>}</section></div></>;
  return landlord?<Shell>{content}</Shell>:<main style={{maxWidth:1000,margin:'auto',padding:20}}><h1>Tenant2Care</h1><nav style={{display:'flex',gap:16,marginBottom:20}}><Link href="/tenant/dashboard">Dashboard</Link><Link href="/tenant/apply">Applications</Link><Link href="/tenant/maintenance">Maintenance</Link></nav>{content}<footer className="t2c-tenant-footer"><form action="/auth/signout" method="post"><button className="t2c-bottom-logout" type="submit">↪ Sign out / Log keluar</button></form></footer></main>
 }
