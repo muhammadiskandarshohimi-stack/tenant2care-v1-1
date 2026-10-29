@@ -14,7 +14,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}){
  const money=(v:number)=>new Intl.NumberFormat('en-MY',{style:'currency',currency:'MYR'}).format(Number(v));
  return <main className="t2c-agreement-document" style={{maxWidth:800,margin:'32px auto',padding:32,background:'white',color:'#222',lineHeight:1.6,overflowWrap:'anywhere'}}>
  <style>{'@media print{.no-print{display:none!important}body{background:white}main{margin:0!important;padding:0!important}.signatures{break-inside:avoid}h2{break-after:avoid}}'}</style>
- <nav className="no-print"><Link href="/agreements">Back to agreements</Link> · <PrintReceipt/></nav>
+ <nav className="no-print"><Link href="/agreements">Back to agreements</Link></nav>
  <p style={{fontWeight:800,color:'#000'}}>DRAFT — FOR REVIEW — UNSIGNED / UNSTAMPED</p>
  <h1>Residential room tenancy agreement</h1><p>Reference: {d.id} · Draft version {d.draft_version}</p>
  <p>This draft records proposed terms between <strong>{s.landlord_name}</strong> (Landlord) and <strong>{s.tenant_name}</strong> (Tenant). Complete all outstanding details and agree the full terms before signing.</p>
@@ -28,5 +28,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}){
  <div className="signatures"><h2>Signatures — complete outside Tenant2Care after review</h2><p>Landlord signature: __________________ Date: ______________</p><p>Tenant signature: ____________________ Date: ______________</p><p>Witness name / signature (if required): __________________________</p></div>
  <p style={{fontSize:12}}>Generated as an editable-terms draft from saved tenancy data. This is not legal review, proof of signature, proof of payment or a stamp certificate. Review the completed document before execution.</p>
  <p className="no-print"><a href="https://www.hasil.gov.my/en/duti-setem/sistem-taksir-sendiri-duti-setem-stsds/" target="_blank" rel="noreferrer">HASiL: official stamp duty process</a></p>
+
+ <div className="no-print t2c-agreement-print-footer"><PrintReceipt/></div>
  </main>
 }

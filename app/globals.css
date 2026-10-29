@@ -1008,3 +1008,25 @@ button.t2c-tenant-action:hover{
  .t2c-utility-item{padding:13px}
  .t2c-utility-item-head>span{font-size:15px}
 }
+
+/* Agreement-only Print / Save PDF action at the bottom right. Hidden on print. */
+.malay-agreement .t2c-agreement-print-footer,
+.t2c-agreement-document .t2c-agreement-print-footer{
+ display:flex;justify-content:flex-end;align-items:center;
+ margin:36px 0 0;padding:20px 0 0;
+ border-top:1px solid #a0a0a0!important;
+ background:#fff!important;color:#000!important;
+}
+.malay-agreement .t2c-agreement-print-footer button,
+.t2c-agreement-document .t2c-agreement-print-footer button{
+ min-height:48px;padding:12px 20px;font-size:14px;font-weight:750;
+ background:#fff!important;color:#000!important;
+ -webkit-text-fill-color:#000!important;
+ border:1px solid #000!important;border-radius:10px!important;
+ cursor:pointer;box-shadow:none!important;
+}
+.malay-agreement .t2c-agreement-print-footer button:hover,
+.t2c-agreement-document .t2c-agreement-print-footer button:hover{
+ background:#f1f1f1!important;
+}
+@media print{.t2c-agreement-print-footer{display:none!important}}
