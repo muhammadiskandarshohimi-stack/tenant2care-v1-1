@@ -30,6 +30,6 @@ export default function MalayAgreement({snapshot:s,id,version}:{snapshot:MalayAg
  <section className="agreement-new-page"><h2>JADUAL PERTAMA</h2><dl className="agreement-particulars"><dt>1. TEMPOH MENYEWA</dt><dd>{s.term_months} BULAN</dd><dt>2. TARIKH BERKUAT KUASA</dt><dd>{date(s.start_date)}</dd><dt>3. SEWA BULANAN</dt><dd>{money(s.monthly_rent)}</dd><dt>4. JENIS &amp; TARIKH PEMBAYARAN</dt><dd>{value('payment_method')}<br/>{value('bank_name')}<br/>{d.account_holder?.trim()||s.landlord_name}<br/>{value('bank_account')}<br/>PADA {String(d.payment_day||'1').padStart(2,'0')} HB SETIAP BULAN</dd></dl>
  <h2>Deposit</h2><table><tbody><tr><td>1. Deposit sekuriti</td><td>{money(Number(s.deposit_amount)-utility)}</td></tr><tr><td>2. Utiliti (Elektrik &amp; Air)</td><td>{money(utility)}</td></tr><tr><th>JUMLAH DEPOSIT DIPERSETUJUI</th><th>{money(s.deposit_amount)}</th></tr></tbody></table><p style={{fontSize:12}}>Jumlah deposit ialah amaun yang dipersetujui dalam rekod penyewaan. Dokumen ini bukan resit bayaran.</p></section>
 
- <div className="no-print t2c-agreement-print-footer"><PrintReceipt/></div>
+ <div className="no-print t2c-agreement-print-footer"><PrintReceipt language="ms"/></div>
  </main>;
 }
