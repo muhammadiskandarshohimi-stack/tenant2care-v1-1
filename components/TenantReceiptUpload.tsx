@@ -5,12 +5,19 @@ import {useLanguage,tr} from './LanguageSwitcher';
 type Tenancy={id:string;owner_id:string;property_name:string;room_name:string};
 type Submission={id:string;tenancy_id:string;amount:number;payment_type:string;reference:string;status:string;landlord_remark:string|null;submitted_at:string};
 const db=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+function failureMessage(value:unknown,fallback:string){
+ if(value&&typeof value==='object'&&'message' in value){
+  const message=(value as {message?:unknown}).message;
+  if(typeof message==='string'&&message.trim())return message;
+ }
+ return fallback;
+}
 export default function TenantReceiptUpload(){
  const lang=useLanguage(),t=(en:string,my:string)=>tr(lang,en,my);
  const gallery=useRef<HTMLInputElement>(null),camera=useRef<HTMLInputElement>(null);
  const [tenancies,setTenancies]=useState<Tenancy[]>([]),[list,setList]=useState<Submission[]>([]);
  const [tenancy,setTenancy]=useState(''),[type,setType]=useState('rent'),[amount,setAmount]=useState(''),[reference,setReference]=useState('');
- const [file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
+ const [file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false),[stage,setStage]=useState(''),[error,setError]=useState(''),[message,setMessage]=useState('');
  async function load(){
   const [a,b]=await Promise.all([db.rpc('tenant_receipt_tenancy_options'),db.from('tenant_payment_submissions').select('id,tenancy_id,amount,payment_type,reference,status,landlord_remark,submitted_at').order('submitted_at',{ascending:false}).limit(50)]);
   if(a.error||b.error){setError(a.error?.message||b.error?.message||'Could not load receipts');return}
@@ -20,22 +27,40 @@ export default function TenantReceiptUpload(){
  async function submit(e:React.FormEvent){
   e.preventDefault();if(busy)return;setError('');setMessage('');
   const selected=tenancies.find(x=>x.id===tenancy),n=Number(amount);
-  if(!selected||!file||!Number.isFinite(n)||n<=0||n>100000000||Math.round(n*100)!==n*100||reference.trim().length<2||reference.length>160){setError(t('Complete all details and select a receipt.','Lengkapkan maklumat dan pilih resit.'));return}
+  if(!selected||!file||!Number.isFinite(n)||n<=0||n>100000000||Math.abs(Math.round(n*100)-n*100)>0.000001||reference.trim().length<2||reference.length>160){setError(t('Complete all details and select a receipt.','Lengkapkan maklumat dan pilih resit.'));return}
   const allowed:{[key:string]:string}={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};
   if(!allowed[file.type]||file.size>5242880||file.size===0){setError(t('Use a JPG, PNG, WebP or PDF under 5 MB.','Gunakan JPG, PNG, WebP atau PDF kurang daripada 5 MB.'));return}
-  setBusy(true);
-  let path='';
+  setBusy(true);setStage(t('Preparing receipt...','Menyediakan resit...'));
+  let path='';let uploaded=false;let recordSaved=false;
   try{
-   const {data:{user},error:auth}=await db.auth.getUser();if(auth||!user)throw Error('Please sign in again.');
+   const {data:{user},error:auth}=await db.auth.getUser();
+   if(auth||!user)throw auth||Error(t('Please sign in again.','Sila log masuk semula.'));
    path=user.id+'/'+crypto.randomUUID()+'.'+allowed[file.type];
+   setStage(t('Uploading receipt...','Memuat naik resit...'));
    const upload=await db.storage.from('tenant-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});
    if(upload.error)throw upload.error;
-   const insert=await db.from('tenant_payment_submissions').insert({tenancy_id:selected.id,owner_id:selected.owner_id,tenant_id:user.id,amount:n,payment_type:type,reference:reference.trim(),receipt_path:path});
+   uploaded=true;
+   setStage(t('Sending for landlord review...','Menghantar untuk semakan tuan rumah...'));
+   const insert=await db.from('tenant_payment_submissions').insert({
+    tenancy_id:selected.id,owner_id:selected.owner_id,tenant_id:user.id,
+    amount:n,payment_type:type,reference:reference.trim(),receipt_path:path
+   });
    if(insert.error)throw insert.error;
-   setFile(null);setAmount('');setReference('');setMessage(t('Receipt sent. Awaiting landlord confirmation.','Resit dihantar. Menunggu pengesahan tuan rumah.'));
+   recordSaved=true;
+   setFile(null);setAmount('');setReference('');
+   if(gallery.current)gallery.current.value='';
+   if(camera.current)camera.current.value='';
+   setMessage(t('Receipt sent successfully. Awaiting landlord confirmation.','Resit berjaya dihantar. Menunggu pengesahan tuan rumah.'));
    await load();
-  }catch(e){setError(e instanceof Error?e.message:t('Submission failed.','Penghantaran gagal.'))}
-  finally{setBusy(false)}
+  }catch(e){
+   if(uploaded&&!recordSaved&&path){
+    // Only remove a failed, unlinked upload. Confirmed/submitted proofs remain protected by RLS.
+    await db.storage.from('tenant-payment-proofs').remove([path]);
+   }
+   const detail=failureMessage(e,t('Please retry the submission.','Sila cuba hantar semula.'));
+   setError(t('Receipt not submitted: ','Resit tidak berjaya dihantar: ')+detail);
+  }
+  finally{setBusy(false);setStage('')}
  }
  return <section className="panel t2c-receipt-form">
   <h2>{t('Send payment receipt','Hantar resit bayaran')}</h2>
@@ -53,6 +78,7 @@ export default function TenantReceiptUpload(){
    </div>
    {file&&<p>{t('Selected file','Fail dipilih')}: {file.name}</p>}
    <button type="submit" disabled={busy||!file||!tenancy}>{busy?t('Sending...','Menghantar...'):t('Send Receipt','Hantar Resit')}</button>
+   {busy&&stage&&<p role="status" className="muted">{stage}</p>}
   </form>
   {error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status" className="success">{message}</p>}
   <h3>{t('Receipt submission status','Status penghantaran resit')}</h3>
