@@ -21,7 +21,7 @@ Deno.serve(async(req:Request)=>{
  const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  const resendKey=Deno.env.get("RESEND_API_KEY");
  const enabled=Deno.env.get("EMAIL_ALERTS_ENABLED")==="true";
- const sender=Deno.env.get("EMAIL_FROM_ADDRESS")||"Tenant2Care <notifications@prgpro.com.my>";
+ const sender=Deno.env.get("EMAIL_FROM_ADDRESS")||"Tenant2Care <notifications@progpro.com.my>";
  if(!supabaseUrl||!serviceKey)return json(503,{error:"Backend service configuration missing"});
  if(req.headers.get("Authorization")!==`Bearer ${serviceKey}`)return json(403,{error:"Service role authorization required"});
  if(!enabled||!resendKey)return json(503,{error:"Email delivery inactive. Verify sending domain and set RESEND_API_KEY and EMAIL_ALERTS_ENABLED=true first."});
