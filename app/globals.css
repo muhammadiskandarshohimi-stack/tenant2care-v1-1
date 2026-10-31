@@ -1167,3 +1167,41 @@ button.t2c-maintenance-delete-button:disabled{opacity:.55!important;cursor:wait}
  .t2c-notification-item{padding:13px}
  .t2c-notification-toolbar-buttons{width:100%}
 }
+
+/* Property-scoped announcement controls */
+.t2c-notification-form select{
+ display:block!important;
+ width:100%!important;
+ min-width:0;
+ box-sizing:border-box;
+ min-height:48px!important;
+ margin-top:6px!important;
+ padding:12px 13px!important;
+ background:var(--tc-soft)!important;
+ color:var(--tc-text)!important;
+ -webkit-text-fill-color:var(--tc-text)!important;
+ border:1px solid var(--tc-border)!important;
+ border-radius:11px!important;
+ font-size:15px!important;
+ cursor:pointer;
+}
+.t2c-notification-form select:disabled{
+ opacity:.65;
+ cursor:wait;
+}
+.t2c-notification-target{
+ display:block;
+ margin:0!important;
+ padding:11px 14px;
+ background:var(--tc-soft)!important;
+ border:1px solid var(--tc-border)!important;
+ border-left:4px solid var(--tc-accent-strong)!important;
+ border-radius:9px;
+ color:var(--tc-text)!important;
+ font-size:13px!important;
+ line-height:1.55!important;
+}
+.t2c-notification-target strong{
+ color:var(--tc-text)!important;
+ font-weight:800;
+}

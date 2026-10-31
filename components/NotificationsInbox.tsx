@@ -5,6 +5,7 @@ import {useRouter} from 'next/navigation';
 import {createBrowserClient} from '@supabase/ssr';
 import {useLanguage,tr} from './LanguageSwitcher';
 
+type PropertyOption={id:string;name:string};
 type Notice={
  id:string;kind:string;title_en:string;title_my:string;body_en:string;body_my:string;
  target_path:string;created_at:string;read_at:string|null;
@@ -14,6 +15,7 @@ const time=(value:string)=>new Date(value).toLocaleString('en-MY',{timeZone:'Asi
 export default function NotificationsInbox({landlord=false}:{landlord?:boolean}){
  const lang=useLanguage(),router=useRouter();const t=(en:string,my:string)=>tr(lang,en,my);
  const [items,setItems]=useState<Notice[]>([]),[title,setTitle]=useState(''),[body,setBody]=useState('');
+ const [properties,setProperties]=useState<PropertyOption[]>([]),[propertyId,setPropertyId]=useState(''),[propertiesLoading,setPropertiesLoading]=useState(landlord);
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[message,setMessage]=useState('');
  const [deviceAlerts,setDeviceAlerts]=useState(false),[deviceSupport,setDeviceSupport]=useState(false);
  const load=useCallback(async()=>{
@@ -35,6 +37,31 @@ export default function NotificationsInbox({landlord=false}:{landlord?:boolean})
   window.addEventListener('focus',refresh);
   return()=>{window.clearInterval(interval);window.removeEventListener('focus',refresh)};
  },[load]);
+ useEffect(()=>{
+  if(!landlord)return;
+  let active=true;
+  async function loadProperties(){
+   setPropertiesLoading(true);
+   const {data:{user},error:authError}=await db.auth.getUser();
+   if(!active)return;
+   if(authError||!user){
+    setError(t('Please sign in again to select a property.','Sila log masuk semula untuk memilih hartanah.'));
+    setPropertiesLoading(false);return;
+   }
+   const {data,error:fetchError}=await db.from('properties')
+    .select('id,name').eq('owner_id',user.id).order('name');
+   if(!active)return;
+   if(fetchError)setError(fetchError.message);
+   else{
+    const options=(data||[]) as PropertyOption[];
+    setProperties(options);
+    setPropertyId(current=>options.some(x=>x.id===current)?current:options.length===1?options[0].id:'');
+   }
+   setPropertiesLoading(false);
+  }
+  void loadProperties();
+  return()=>{active=false};
+ },[landlord]);
  async function enableBrowserAlerts(){
   if(!('Notification' in window)){setError(t('This browser does not support browser notifications. Use the in-app inbox.','Pelayar ini tidak menyokong pemberitahuan pelayar. Gunakan peti masuk aplikasi.'));return}
   try{
@@ -67,15 +94,26 @@ export default function NotificationsInbox({landlord=false}:{landlord?:boolean})
   router.push(valid?notice.target_path:landlord?'/dashboard':'/tenant/dashboard');
  }
  async function broadcast(e:React.FormEvent){
-  e.preventDefault();if(busy)return;
-  if(!window.confirm(t('Send this message to all your linked tenant accounts?','Hantar mesej ini kepada semua akaun penyewa yang berkaitan?')))return;
+  e.preventDefault();if(busy||propertiesLoading)return;
+  const selected=properties.find(p=>p.id===propertyId);
+  if(!selected){setError(t('Select a property before sending.','Pilih hartanah sebelum menghantar.'));return}
+  const confirmation=t('Send this announcement ONLY to tenants linked to ','Hantar pengumuman ini HANYA kepada penyewa berkaitan ')+'“'+selected.name+'”?';
+  if(!window.confirm(confirmation))return;
   setBusy(true);setError('');setMessage('');
   try{
-   const {data,error:e}=await db.rpc('landlord_broadcast_notification',{p_title:title.trim(),p_body:body.trim()});
+   const {data,error:e}=await db.rpc('landlord_broadcast_notification',{
+    p_property_id:selected.id,p_title:title.trim(),p_body:body.trim()
+   });
    if(e)throw e;
    const count=Number(data||0);
-   if(count>0){setTitle('');setBody('');setMessage(t('Announcement delivered to ','Pengumuman dihantar kepada ')+count+t(' tenant account(s).',' akaun penyewa.'))}
-   else setMessage(t('No linked tenant accounts were found. Nothing was sent.','Tiada akaun penyewa berkaitan ditemui. Tiada mesej dihantar.'));
+   if(count>0){
+    setTitle('');setBody('');
+    setMessage(t('Announcement sent to ','Pengumuman dihantar kepada ')+count+
+      t(' tenant account(s) at ',' akaun penyewa di ')+selected.name+'.');
+   }else{
+    setMessage(t('No eligible tenant accounts are linked to ','Tiada akaun penyewa yang layak dikaitkan dengan ')+selected.name+
+      t('. No notification was sent.','. Tiada pemberitahuan dihantar.'));
+   }
   }catch(e){setError(e instanceof Error?e.message:t('Announcement could not be sent.','Pengumuman tidak dapat dihantar.'))}
   finally{setBusy(false)}
  }
@@ -88,13 +126,21 @@ export default function NotificationsInbox({landlord=false}:{landlord?:boolean})
   </header>
 
   {landlord&&<section className="panel t2c-notification-compose">
-   <h2>{t('Announcement to all tenants','Pengumuman kepada semua penyewa')}</h2>
-   <p className="muted">{t('Sends one private inbox message to each tenant account linked to your properties. Only one copy per tenant.','Menghantar satu mesej peribadi kepada setiap akaun penyewa berkaitan hartanah anda. Satu salinan untuk setiap penyewa.')}</p>
+   <h2>{t('Property Announcement','Pengumuman Hartanah')}</h2>
+   <p className="muted">{t('Select one property. Only its linked tenants will receive this announcement. Tenants from your other properties will not be notified.','Pilih satu hartanah. Hanya penyewa berkaitan hartanah tersebut akan menerima pengumuman ini. Penyewa hartanah lain tidak akan dimaklumkan.')}</p>
    <form onSubmit={e=>void broadcast(e)} className="t2c-notification-form">
+    <label htmlFor="t2c-notify-property">{t('Send notification to property','Hantar pemberitahuan kepada hartanah')}
+     <select id="t2c-notify-property" required value={propertyId} disabled={busy||propertiesLoading} onChange={e=>setPropertyId(e.target.value)}>
+      <option value="">{propertiesLoading?t('Loading properties...','Memuatkan hartanah...'):t('Select a property','Pilih hartanah')}</option>
+      {properties.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+     </select>
+    </label>
+    {!propertiesLoading&&properties.length===0&&<p className="muted" role="status">{t('No properties are linked to this landlord account.','Tiada hartanah yang berkaitan dengan akaun tuan rumah ini.')}</p>}
+    {propertyId&&<p className="t2c-notification-target" role="status">{t('Recipients: approved applicants and current tenants of ','Penerima: pemohon yang diluluskan dan penyewa semasa di ')}<strong>{properties.find(p=>p.id===propertyId)?.name||''}</strong></p>}
     <label>{t('Subject','Tajuk')}<input required minLength={3} maxLength={120} value={title} onChange={e=>setTitle(e.target.value)} placeholder={t('Example: Water supply maintenance','Contoh: Penyelenggaraan bekalan air')}/></label>
-    <label>{t('Announcement message','Mesej pengumuman')}<textarea required minLength={5} maxLength={1500} rows={4} value={body} onChange={e=>setBody(e.target.value)} placeholder={t('Write your message to all tenants...','Tulis mesej kepada semua penyewa...')}/></label>
-    <button type="submit" disabled={busy||title.trim().length<3||body.trim().length<5}>
-     {busy?t('Sending...','Menghantar...'):t('Send to All Tenants','Hantar kepada Semua Penyewa')}
+    <label>{t('Announcement message','Mesej pengumuman')}<textarea required minLength={5} maxLength={1500} rows={4} value={body} onChange={e=>setBody(e.target.value)} placeholder={t('Write your message for the selected property...','Tulis mesej untuk hartanah yang dipilih...')}/></label>
+    <button type="submit" disabled={busy||propertiesLoading||!propertyId||title.trim().length<3||body.trim().length<5}>
+     {busy?t('Sending...','Menghantar...'):t('Send to Selected Property','Hantar kepada Hartanah Dipilih')}
     </button>
    </form>
   </section>}
