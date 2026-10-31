@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {createBrowserClient} from '@supabase/ssr';
 import {useLanguage,tr} from './LanguageSwitcher';
 import TenantUtilities from './TenantUtilities';
+import NotificationBell from './NotificationBell';
 
 type Application={id:string;full_name:string;status:string;requested_term_months:number;room_name:string;property_name:string;created_at:string};
 type Tenancy={id:string;status:string;start_date:string;end_date:string;term_months:number;monthly_rent:number;deposit_amount:number;room_name:string;property_name:string};
@@ -74,6 +75,7 @@ export default function TenantDashboard(){
    <aside className="t2c-tenant-sidebar">
     <nav className="t2c-tenant-actions" aria-label={t('Tenant navigation','Navigasi penyewa')}>
      <Link className="t2c-tenant-action is-current" href="/tenant/dashboard" aria-current="page"><ActionIcon name="dashboard"/><span>{t('Dashboard','Papan Pemuka')}</span></Link>
+     <NotificationBell audience="tenant" placement="sidebar"/>
      <Link className="t2c-tenant-action" href="/tenant/apply"><ActionIcon name="apply"/><span>{t('Apply for a room','Mohon bilik')}</span></Link>
      <Link className="t2c-tenant-action" href="/tenant/payments"><ActionIcon name="payment"/><span>{t('Pay rent','Bayar sewa')}</span></Link>
      <Link className="t2c-tenant-action" href="/tenant/utilities"><ActionIcon name="utilities"/><span>{t('Utility Bills','Bil Utiliti')}</span></Link>
